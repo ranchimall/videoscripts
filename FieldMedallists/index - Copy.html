@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mathematicians — Video Frame Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+/* ===== VARIABLES ===== */
+:root {
+  --bg-core: #090b10;
+  --bg-canvas: #0c0e14;
+  --bg-surface: #131722;
+  --bg-elevated: #1a1f2e;
+  --gold: #d4af37;
+  --gold-light: #f3e5ab;
+  --gold-deep: #996515;
+  --gold-glow: rgba(212,175,55,.22);
+  --gold-line: rgba(212,175,55,.22);
+  --gold-border: rgba(212,175,55,.55);
+  --text-1: #ffffff;
+  --text-2: #f1f1f1;
+  --text-3: #dbdddf;
+  --text-gold: #d4af37;
+  --pill-bg: rgba(212,175,55,.1);
+  --pill-border: rgba(212,175,55,.3);
+  --serif-display: 'Cinzel', serif;
+  --serif-body: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Plus Jakarta Sans', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+body.theme-chalkboard { --bg-core:#111417; --bg-canvas:#15191e; --bg-surface:#1d232a; --bg-elevated:#262e37; --gold:#e5b95f; --gold-light:#fae4a8; }
+body.theme-parchment {
+  --bg-core:#eae4d7; --bg-canvas:#f6f2e8; --bg-surface:#fff; --bg-elevated:#fbf8f1;
+  --gold:#942525; --gold-light:#b33939; --gold-deep:#661010; --gold-glow:rgba(148,37,37,.15);
+  --gold-line:rgba(148,37,37,.2); --gold-border:rgba(148,37,37,.5);
+  --text-1:#1c1815; --text-2:#4a443e; --text-3:#797167; --text-gold:#942525;
+  --pill-bg:rgba(148,37,37,.07); --pill-border:rgba(148,37,37,.25);
+}
+body.theme-navy {
+  --bg-core:#050b14; --bg-canvas:#091322; --bg-surface:#0f1f36; --bg-elevated:#162c4b;
+  --gold:#63b3ed; --gold-light:#bee3f8; --gold-deep:#2b6cb0; --gold-glow:rgba(99,179,237,.2);
+  --gold-line:rgba(99,179,237,.2); --gold-border:rgba(99,179,237,.5);
+  --text-gold:#90cdf4; --pill-bg:rgba(99,179,237,.1); --pill-border:rgba(99,179,237,.3);
+}
+
+/* ===== RESET ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-core);color:var(--text-1);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+
+/* ===== APP SHELL ===== */
+.app-shell{display:flex;width:100vw;height:100vh;overflow:hidden}
+
+/* ===== SIDEBAR (Manager Panel) ===== */
+.sidebar{
+  width:340px;min-width:340px;height:100vh;
+  background:#0d1019;border-right:1px solid var(--gold-line);
+  display:flex;flex-direction:column;overflow:hidden;
+  z-index:50;flex-shrink:0;
+}
+.sidebar-header{
+  padding:20px 20px 14px;border-bottom:1px solid rgba(255,255,255,.07);
+  background:linear-gradient(180deg,#111520,#0d1019);flex-shrink:0;
+}
+.sidebar-header h2{
+  font-family:var(--serif-display);font-size:16px;letter-spacing:2px;
+  color:var(--gold-light);font-weight:700;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+}
+.sidebar-header h2 span{font-size:18px}
+.sidebar-sub{font-size:11px;letter-spacing:1.5px;color:var(--text-3);margin-top:4px;font-weight:500;text-transform:uppercase;}
+
+/* Mathematician List */
+.mat-list{flex:1;overflow-y:auto;padding:10px 12px;}
+.mat-list::-webkit-scrollbar{width:4px}
+.mat-list::-webkit-scrollbar-track{background:transparent}
+.mat-list::-webkit-scrollbar-thumb{background:var(--gold-line);border-radius:2px}
+
+.mat-card{
+  border:1px solid rgba(255,255,255,.08);border-radius:10px;
+  padding:12px 14px;margin-bottom:8px;cursor:pointer;
+  transition:all .2s;position:relative;display:flex;align-items:center;gap:12px;
+  background:#111520;
+}
+.mat-card:hover{border-color:var(--gold-line);background:#161c2a}
+.mat-card.active{border-color:var(--gold);background:rgba(212,175,55,.06)}
+.mat-card.active::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:3px;background:var(--gold);border-radius:0 2px 2px 0}
+.mat-thumb{
+  width:44px;height:44px;border-radius:8px;object-fit:cover;object-position:top;
+  border:1px solid rgba(255,255,255,.1);flex-shrink:0;background:#1a1f2e;
+}
+.mat-thumb-placeholder{
+  width:44px;height:44px;border-radius:8px;background:var(--bg-elevated);
+  border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;font-size:18px;
+}
+.mat-info{flex:1;min-width:0}
+.mat-name{font-size:13px;font-weight:700;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--serif-display);letter-spacing:.5px}
+.mat-year{font-size:11px;color:var(--text-gold);font-weight:600;margin-top:2px;font-family:var(--mono);letter-spacing:1px}
+.mat-field-tag{font-size:10px;color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mat-del-btn{
+  width:26px;height:26px;border-radius:6px;background:rgba(220,53,69,.12);
+  border:1px solid rgba(220,53,69,.25);color:#ff6b7b;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-size:14px;transition:all .2s;opacity:0;
+}
+.mat-card:hover .mat-del-btn{opacity:1}
+.mat-del-btn:hover{background:rgba(220,53,69,.25)}
+
+.sidebar-footer{padding:12px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.add-btn{
+  width:100%;padding:11px;border-radius:8px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-deep));
+  border:none;color:#0c0e14;font-weight:800;font-size:13px;
+  cursor:pointer;font-family:var(--sans);letter-spacing:1px;
+  text-transform:uppercase;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.add-btn:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 8px 20px rgba(212,175,55,.3)}
+
+/* ===== MAIN AREA ===== */
+.main-area{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+
+/* Tab Bar */
+.tab-bar{
+  display:flex;align-items:center;gap:0;
+  border-bottom:1px solid var(--gold-line);
+  background:#0d1019;flex-shrink:0;padding:0 20px;
+}
+.tab-btn{
+  padding:14px 22px;font-size:13px;font-weight:600;
+  border:none;background:none;color:var(--text-3);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .2s;
+  letter-spacing:.5px;font-family:var(--sans);
+  margin-bottom:-1px;display:flex;align-items:center;gap:7px;
+}
+.tab-btn:hover{color:var(--text-2)}
+.tab-btn.active{color:var(--gold-light);border-bottom-color:var(--gold)}
+.tab-btn svg{width:15px;height:15px}
+
+.tab-spacer{flex:1}
+.top-actions{display:flex;align-items:center;gap:10px;padding:8px 0}
+.top-btn{
+  padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;
+  border:1px solid rgba(255,255,255,.15);background:#161c2a;color:var(--text-2);
+  cursor:pointer;font-family:var(--sans);transition:all .2s;
+  display:flex;align-items:center;gap:6px;
+}
+.top-btn:hover{background:#1e2738;color:#fff;border-color:rgba(255,255,255,.3)}
+.top-btn.gold{background:linear-gradient(135deg,var(--gold),var(--gold-deep));border:none;color:#0c0e14;font-weight:800}
+.top-btn.gold:hover{filter:brightness(1.1)}
+.theme-sel{
+  background:#161c2a;border:1px solid rgba(255,255,255,.15);
+  color:var(--text-2);padding:7px 10px;border-radius:6px;
+  font-size:12px;cursor:pointer;outline:none;font-family:var(--sans);
+}
+
+/* ===== TAB PANELS ===== */
+.tab-panel{display:none;flex:1;overflow:hidden}
+.tab-panel.active{display:flex;flex-direction:column}
+
+/* --- PREVIEW TAB --- */
+.preview-tab{align-items:center;justify-content:center;background:var(--bg-core)}
+.frame-scaler{
+  display:flex;align-items:center;justify-content:center;
+  flex:1;padding:20px;
+}
+
+/* 16:9 Frame Canvas */
+.frame-canvas{
+  width:1920px;height:1080px;min-width:1920px;min-height:1080px;
+  background:var(--bg-canvas);position:relative;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:flex-start;
+  padding:44px 60px 48px;transform-origin:center center;
+  box-shadow:0 0 60px rgba(0,0,0,.9);
+}
+/* BG Decorations */
+.frame-canvas::after{content:'';position:absolute;inset:16px;border:1px solid var(--gold-line);pointer-events:none;z-index:2}
+.frame-canvas::before{content:'';position:absolute;inset:22px;border:1px solid rgba(255,255,255,.03);pointer-events:none;z-index:2}
+.bg-vignette{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,transparent 40%,rgba(0,0,0,.45) 100%);pointer-events:none;z-index:0}
+.bg-noise{position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+/* Corner ornaments */
+.co{position:absolute;width:22px;height:22px;border:2px solid var(--gold);opacity:.65;pointer-events:none;z-index:3}
+.co-tl{top:12px;left:12px;border-right:none;border-bottom:none}
+.co-tr{top:12px;right:12px;border-left:none;border-bottom:none}
+.co-bl{bottom:12px;left:12px;border-right:none;border-top:none}
+.co-br{bottom:12px;right:12px;border-left:none;border-top:none}
+
+/* Top Bar */
+.frame-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:10;padding-bottom:20px;border-bottom:1px solid var(--gold-line)}
+.series-tag{display:flex;align-items:center;gap:10px;font-family:var(--serif-display);font-size:17px;letter-spacing:3px;font-weight:700;color:var(--text-gold)}
+.series-dot{font-size:12px;animation:pulse 3s infinite}
+.series-sub{color:var(--text-2);font-weight:400;font-family:var(--sans);font-size:14px;letter-spacing:2px;text-transform:uppercase}
+.series-sep{opacity:.25;color:var(--text-3)}
+.imu-badge{display:flex;align-items:center;gap:8px;font-family:var(--sans);font-size:13px;font-weight:700;letter-spacing:1.5px;color:var(--gold-light);background:var(--pill-bg);border:1px solid var(--pill-border);padding:7px 16px;border-radius:999px;text-transform:uppercase}
+.counter-tag{font-family:var(--mono);font-size:15.5px;letter-spacing:2px;color:var(--text-3)}
+.top-right{display:flex;align-items:center;gap:18px}
+
+/* Two Column Stage */
+.frame-stage{display:grid;grid-template-columns:520px 1fr;gap:60px;align-items:center;position:relative;z-index:10;flex:1;padding:24px 0 10px}
+
+/* Left: Portrait */
+.portrait-col{display:flex;flex-direction:column;gap:22px;justify-content:center}
+.passe-partout{position:relative;padding:12px;background:linear-gradient(145deg,var(--bg-elevated),var(--bg-surface));border-radius:12px;border:1px solid var(--gold-line);box-shadow:0 25px 50px -12px rgba(0,0,0,.85),0 0 35px var(--gold-glow)}
+.inner-frame{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--gold-border);background:#000}
+.pc{position:absolute;width:14px;height:14px;border:1.5px solid var(--gold-light);z-index:5;pointer-events:none}
+.pc-tl{top:8px;left:8px;border-right:none;border-bottom:none}
+.pc-tr{top:8px;right:8px;border-left:none;border-bottom:none}
+.pc-bl{bottom:8px;left:8px;border-right:none;border-top:none}
+.pc-br{bottom:8px;right:8px;border-left:none;border-top:none}
+.portrait-wrap{width:100%;height:520px;position:relative;overflow:hidden;background:radial-gradient(circle at center,#1b202c,#07090e)}
+.portrait-img{width:100%;height:100%;object-fit:cover;object-position:center top;filter:contrast(1.04) brightness(.98)}
+.portrait-sheen{position:absolute;inset:0;background:linear-gradient(180deg,transparent 65%,rgba(0,0,0,.7) 100%),radial-gradient(circle at top left,rgba(212,175,55,.07) 0%,transparent 60%);pointer-events:none}
+.portrait-placeholder{width:100%;height:520px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text-3);background:radial-gradient(circle at center,#1b202c,#07090e);font-size:15px}
+.portrait-placeholder .icon{font-size:52px;opacity:.3}
+/* Medal Seal */
+.medal-seal{position:absolute;bottom:18px;right:18px;z-index:6;background:linear-gradient(135deg,#e6c875,#a3751e 60%,#583d09);padding:2px;border-radius:999px;box-shadow:0 8px 20px rgba(0,0,0,.7)}
+.seal-inner{background:#11141c;padding:8px 16px 8px 12px;border-radius:999px;display:flex;align-items:center;gap:8px;border:1px solid var(--gold-light)}
+.seal-icon{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-deep));display:flex;align-items:center;justify-content:center;color:#0c0e14;font-size:15px}
+.seal-texts{display:flex;flex-direction:column}
+.seal-title{font-family:var(--serif-display);font-size:14px;font-weight:700;letter-spacing:1.5px;color:var(--gold-light)}
+.seal-year{font-family:var(--mono);font-size:16px;color:var(--text-2);letter-spacing:1px}
+
+/* Nameplate */
+.nameplate{background:rgba(19,23,34,.85);backdrop-filter:blur(12px);border:1px solid var(--gold-line);border-radius:10px;padding:20px 24px;display:flex;flex-direction:column;gap:6px;position:relative}
+.nameplate::before{content:'';position:absolute;top:0;left:18px;right:18px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.np-header{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:16px;letter-spacing:1.5px;color:var(--text-3);text-transform:uppercase}
+.np-dot{color:var(--gold)}
+.np-name{font-family:var(--serif-display);font-size:34px;font-weight:700;letter-spacing:.8px;color:var(--text-1);line-height:1.15}
+.np-native{font-family:var(--serif-body);font-size:21px;color:var(--text-gold);font-style:italic;letter-spacing:.5px}
+.np-inst{display:flex;align-items:center;gap:12px;font-size:18.5px;color:var(--text-2);font-weight:500;margin-top:4px;padding-top:8px;border-top:1px solid rgba(255,255,255,.06)}
+
+/* Right: Editorial */
+.editorial-col{display:flex;flex-direction:column;justify-content:center;gap:26px}
+.kicker-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.kicker-pill{display:inline-flex;align-items:center;gap:10px;background:var(--pill-bg);border:1px solid var(--pill-border);padding:9px 20px;border-radius:6px;font-family:var(--serif-display);font-size:14.5px;font-weight:600;letter-spacing:1.5px;color:var(--gold-light);text-transform:uppercase;position:relative;overflow:hidden}
+.kicker-pill::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold)}
+.honor-tag{font-family:var(--serif-body);font-size:22px;font-style:italic;color:var(--text-2);max-width:480px;text-align:right}
+.breakthrough-block{position:relative;padding-left:18px}
+.accent-line{position:absolute;left:0;top:4px;bottom:4px;width:4px;background:linear-gradient(180deg,var(--gold-light),var(--gold-deep));border-radius:2px}
+.bt-title{font-family:var(--serif-display);font-size:46px;font-weight:700;line-height:1.2;color:var(--text-1)}
+.citation-card{position:relative;background:linear-gradient(135deg,rgba(212,175,55,.04),var(--bg-surface));border:1px solid var(--gold-line);border-left:3px solid var(--gold);border-radius:8px;padding:22px 28px 22px 58px}
+.cite-qmark{position:absolute;top:-2px;left:14px;font-family:var(--serif-body);font-size:65px;line-height:1;color:var(--gold);opacity:.4;pointer-events:none}
+.cite-text{font-family:var(--serif-body);font-size:30px;line-height:1.50;font-style:italic;color:var(--text-1)}
+.cite-author{font-family:var(--sans);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-3);margin-top:10px;font-weight:600}
+.contribs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.cc{background:rgba(19,23,34,.85);backdrop-filter:blur(10px);border:1px solid var(--gold-line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:7px;position:relative;overflow:hidden}
+.cc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),transparent);opacity:.55}
+.cc-tag{font-family:var(--serif-display);font-size:13px;font-weight:700;letter-spacing:1.5px;color:var(--text-gold);text-transform:uppercase}
+.cc-detail{font-size:15px;line-height:1.4;color:var(--text-2)}
+.eq-panel{background:var(--bg-surface);border:1px solid var(--gold-line);border-radius:8px;padding:15px 24px;display:flex;align-items:center;justify-content:space-between;gap:22px}
+.eq-label{font-family:var(--serif-display);font-size:28px;font-weight:700;letter-spacing:1.5px;color:var(--gold-light);white-space:nowrap;opacity:.85;text-transform:uppercase}
+.eq-render{font-size:28px;color:var(--text-1);flex:1;text-align:right;overflow-x:auto}
+.katex{font-size:1.3em!important;color:var(--text-1)!important}
+
+/* Footer */
+.frame-footer{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:10;padding-top:16px;border-top:1px solid var(--gold-line)}
+.footer-l{display:flex;align-items:center;gap:12px}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold);animation:pulse 2s infinite}
+.footer-label{font-family:var(--serif-display);font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gold-light);text-transform:uppercase}
+.footer-sub{font-size:12px;color:var(--text-3);font-style:italic;font-family:var(--serif-body)}
+.aspect-tag{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--text-3)}
+@keyframes pulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+
+/* Slide transition */
+.slide-in{animation:slideIn .45s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* --- EDIT TAB --- */
+.edit-tab{flex-direction:row;overflow:hidden}
+.edit-panel{flex:1;overflow-y:auto;padding:28px 32px;background:var(--bg-core)}
+.edit-panel::-webkit-scrollbar{width:5px}
+.edit-panel::-webkit-scrollbar-track{background:transparent}
+.edit-panel::-webkit-scrollbar-thumb{background:var(--gold-line);border-radius:3px}
+.edit-preview-strip{
+  width:320px;min-width:320px;background:#0d1019;
+  border-left:1px solid var(--gold-line);
+  display:flex;flex-direction:column;gap:0;overflow:hidden;
+}
+.edit-preview-title{padding:16px 18px;font-family:var(--serif-display);font-size:12px;letter-spacing:2px;color:var(--gold-light);border-bottom:1px solid rgba(255,255,255,.07);text-transform:uppercase;font-weight:700}
+.edit-mini-portrait{width:100%;height:200px;object-fit:cover;object-position:top;background:var(--bg-elevated)}
+.edit-mini-ph{width:100%;height:200px;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-size:40px;color:var(--text-3)}
+.edit-meta{padding:18px;display:flex;flex-direction:column;gap:8px}
+.edit-meta-name{font-family:var(--serif-display);font-size:16px;font-weight:700;color:var(--text-1)}
+.edit-meta-medal{font-size:12px;color:var(--text-gold);font-family:var(--mono);letter-spacing:1px}
+.edit-meta-field{font-size:12px;color:var(--text-3);margin-top:2px}
+
+.section-title{font-family:var(--serif-display);font-size:12px;letter-spacing:2px;color:var(--gold);font-weight:700;text-transform:uppercase;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--gold-line)}
+.form-section{margin-bottom:28px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.fg label{font-size:11px;letter-spacing:1px;color:var(--text-3);font-weight:600;text-transform:uppercase;font-family:var(--sans)}
+input.fi,textarea.fi,select.fi{
+  background:#111520;border:1px solid rgba(255,255,255,.1);
+  color:#fff;padding:9px 12px;border-radius:7px;
+  font-size:13px;font-family:var(--sans);outline:none;width:100%;
+  transition:border-color .2s;
+}
+input.fi:focus,textarea.fi:focus{border-color:var(--gold);background:#151c2c}
+input.fi::placeholder,textarea.fi::placeholder{color:rgba(255,255,255,.2)}
+textarea.fi{resize:vertical;min-height:70px}
+.fi-mono{font-family:var(--mono);font-size:12px}
+
+/* Photo Picker Box */
+.photo-picker-box{
+  background:#111520;border:1px solid var(--gold-line);
+  border-radius:10px;padding:16px;display:flex;align-items:center;
+  gap:18px;transition:border-color .2s;
+}
+.photo-picker-box:hover{border-color:var(--gold)}
+.photo-thumb-area{
+  width:100px;height:120px;border-radius:8px;background:var(--bg-elevated);
+  border:1.5px dashed rgba(212,175,55,.4);overflow:hidden;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  position:relative;transition:all .2s;
+}
+.photo-thumb-area:hover{border-color:var(--gold);background:#1e2738}
+.photo-thumb-area img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.photo-thumb-ph{font-size:11px;color:var(--text-3);text-align:center;padding:8px;line-height:1.4}
+.photo-picker-controls{display:flex;flex-direction:column;gap:6px;flex:1}
+.photo-picker-title{font-family:var(--serif-display);font-size:13px;font-weight:700;color:var(--gold-light);letter-spacing:.5px}
+.photo-picker-desc{font-size:12px;color:var(--text-3);line-height:1.4}
+.photo-picker-desc code{color:var(--gold);background:rgba(212,175,55,.08);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:11px}
+.photo-btn-row{display:flex;align-items:center;gap:10px;margin-top:6px}
+.btn-pc-upload{
+  background:linear-gradient(135deg,var(--gold),var(--gold-deep));
+  color:#0c0e14;font-weight:800;font-size:12px;padding:8px 18px;
+  border-radius:6px;border:none;cursor:pointer;display:inline-flex;
+  align-items:center;gap:6px;letter-spacing:.5px;font-family:var(--sans);
+  transition:all .2s;
+}
+.btn-pc-upload:hover{filter:brightness(1.15);transform:translateY(-1px);box-shadow:0 6px 16px rgba(212,175,55,.3)}
+.btn-remove-photo{
+  background:rgba(220,53,69,.12);border:1px solid rgba(220,53,69,.3);
+  color:#ff6b7b;font-size:12px;padding:8px 14px;border-radius:6px;
+  cursor:pointer;font-family:var(--sans);font-weight:600;transition:all .2s;
+}
+.btn-remove-photo:hover{background:rgba(220,53,69,.25)}
+.url-row{display:flex;gap:8px;margin-top:12px}
+.url-input{flex:1;background:#111520;border:1px solid rgba(255,255,255,.1);color:#fff;padding:8px 12px;border-radius:7px;font-size:12px;font-family:var(--mono);outline:none}
+.url-input:focus{border-color:var(--gold)}
+.url-btn{padding:8px 14px;background:var(--bg-elevated);border:1px solid rgba(255,255,255,.15);color:var(--text-2);border-radius:7px;cursor:pointer;font-size:12px;white-space:nowrap;transition:all .2s}
+.url-btn:hover{background:#1e2738;color:#fff}
+
+/* Point Cards */
+.point-card{background:#111520;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:14px;margin-bottom:10px}
+.point-card-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.point-num{width:22px;height:22px;border-radius:50%;background:var(--gold);color:#0c0e14;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--mono)}
+
+/* Save Bar */
+.save-bar{
+  position:sticky;bottom:0;background:#0d1019;border-top:1px solid var(--gold-line);
+  padding:16px 32px;display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.save-btn{
+  padding:11px 28px;border-radius:8px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-deep));
+  border:none;color:#0c0e14;font-weight:800;font-size:13px;
+  cursor:pointer;font-family:var(--sans);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;transition:all .2s;
+}
+.save-btn:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 8px 20px rgba(212,175,55,.3)}
+.discard-btn{padding:11px 20px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--text-2);font-size:13px;cursor:pointer;font-family:var(--sans);transition:all .2s}
+.discard-btn:hover{border-color:rgba(255,255,255,.3);color:#fff}
+.save-hint{font-size:12px;color:var(--text-3);font-style:italic}
+.autosave-tag{font-size:11px;color:#4caf50;font-family:var(--mono);letter-spacing:1px;opacity:0;transition:opacity .5s}
+.autosave-tag.show{opacity:1}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 20px;background:#0a0d14;border-top:1px solid var(--gold-line);flex-shrink:0;
+}
+.nav-btn{
+  width:36px;height:36px;border-radius:50%;background:#161c2a;
+  border:1px solid rgba(255,255,255,.12);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .2s;font-size:16px;
+}
+.nav-btn:hover{background:#1e2738;border-color:var(--gold);color:var(--gold)}
+.nav-label{font-family:var(--mono);font-size:13px;color:var(--text-2);padding:0 12px}
+
+/* ===== VIDEO EXPORT MODAL ===== */
+.video-modal-backdrop{
+  position:fixed;inset:0;background:rgba(5,7,12,.85);
+  backdrop-filter:blur(10px);z-index:9990;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+}
+.video-modal{
+  background:#0f131d;border:1px solid var(--gold-line);
+  border-radius:14px;width:760px;max-width:96vw;max-height:92vh;
+  display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.9),0 0 40px var(--gold-glow);
+  overflow:hidden;
+}
+.video-modal-header{
+  padding:18px 24px;border-bottom:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(180deg,#141926,#0f131d);flex-shrink:0;
+}
+.video-modal-title{
+  font-family:var(--serif-display);font-size:16px;letter-spacing:1.5px;
+  color:var(--gold-light);font-weight:700;display:flex;align-items:center;gap:10px;
+}
+.close-modal-btn{
+  background:transparent;border:none;color:var(--text-3);
+  font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .2s;
+}
+.close-modal-btn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.video-modal-body{
+  padding:22px 24px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:20px;
+}
+.video-modal-body::-webkit-scrollbar{width:4px}
+.video-modal-body::-webkit-scrollbar-thumb{background:var(--gold-line);border-radius:2px}
+
+.video-summary-box{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+}
+.v-sum-item{
+  background:#141926;border:1px solid rgba(255,255,255,.08);
+  border-radius:8px;padding:12px 16px;display:flex;flex-direction:column;gap:4px;
+}
+.v-sum-label{font-size:10px;letter-spacing:1.5px;color:var(--text-3);font-weight:700;text-transform:uppercase}
+.v-sum-val{font-size:15px;font-weight:700;color:#fff;font-family:var(--mono)}
+.v-sum-val.gold{color:var(--gold-light)}
+
+.v-section-title{
+  font-family:var(--serif-display);font-size:12px;letter-spacing:1.5px;
+  color:var(--gold);font-weight:700;text-transform:uppercase;margin-bottom:-8px;
+}
+.slide-timing-list{
+  display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;
+  padding-right:4px;
+}
+.slide-timing-list::-webkit-scrollbar{width:4px}
+.slide-timing-list::-webkit-scrollbar-thumb{background:var(--gold-line);border-radius:2px}
+
+.timing-card{
+  background:#131824;border:1px solid rgba(255,255,255,.07);border-radius:8px;
+  padding:10px 14px;display:flex;align-items:center;gap:12px;
+}
+.timing-idx{font-family:var(--mono);font-size:11px;color:var(--text-3);width:24px}
+.timing-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;background:#1a2030;flex-shrink:0}
+.timing-info{flex:1;min-width:0}
+.timing-name{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timing-sub{font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timing-dur-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.timing-dur-wrap label{font-size:11px;color:var(--text-3)}
+.timing-dur-input{
+  width:64px;background:#0b0d14;border:1px solid var(--gold-line);
+  color:var(--gold-light);padding:5px 8px;border-radius:6px;text-align:center;
+  font-family:var(--mono);font-size:12px;font-weight:700;outline:none;
+}
+.timing-dur-input:focus{border-color:var(--gold)}
+
+.v-settings-row{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;
+}
+.v-setting-col{display:flex;flex-direction:column;gap:6px}
+.v-setting-col label{font-size:11px;letter-spacing:1px;color:var(--text-3);font-weight:600;text-transform:uppercase}
+
+.v-render-status-box{
+  background:#131824;border:1px solid var(--gold-border);border-radius:10px;
+  padding:16px;display:flex;flex-direction:column;gap:12px;
+}
+.v-status-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#fff}
+.v-percent{font-family:var(--mono);font-weight:700;color:var(--gold-light)}
+.v-progress-bar-wrap{
+  width:100%;height:8px;background:#0b0d14;border-radius:999px;overflow:hidden;
+}
+.v-progress-bar-fill{
+  width:0%;height:100%;background:linear-gradient(90deg,var(--gold-deep),var(--gold),var(--gold-light));
+  transition:width .15s linear;border-radius:999px;
+}
+.v-preview-monitor-wrap{
+  width:100%;height:180px;background:#000;border-radius:8px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.1);
+}
+.v-monitor-canvas{width:100%;height:100%;object-fit:contain}
+
+.video-modal-footer{
+  padding:16px 24px;border-top:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:flex-end;gap:12px;
+  background:#0c0f17;flex-shrink:0;
+}
+.modal-cancel-btn{
+  padding:10px 18px;border-radius:7px;background:transparent;
+  border:1px solid rgba(255,255,255,.15);color:var(--text-2);font-size:13px;
+  cursor:pointer;font-family:var(--sans);transition:all .2s;
+}
+.modal-cancel-btn:hover{color:#fff;border-color:rgba(255,255,255,.3)}
+.modal-export-btn{
+  padding:10px 24px;border-radius:7px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-deep));
+  border:none;color:#0c0e14;font-weight:800;font-size:13px;
+  cursor:pointer;font-family:var(--sans);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;transition:all .2s;
+}
+.modal-export-btn:hover{filter:brightness(1.15);transform:translateY(-1px);box-shadow:0 8px 20px rgba(212,175,55,.3)}
+.modal-export-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ===== SIDEBAR: Mathematician Manager ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2><span>🏛</span> Mathematician Deck</h2>
+      <div class="sidebar-sub">Click to select • Edit on right</div>
+    </div>
+    <div class="mat-list" id="matList"><!-- injected --></div>
+    <div class="sidebar-footer">
+      <button class="add-btn" id="addBtn">+ Add New Mathematician</button>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN AREA ===== -->
+  <div class="main-area">
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tabPreview" onclick="switchTab('preview')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Frame Preview
+      </button>
+      <button class="tab-btn" id="tabEdit" onclick="switchTab('edit')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit Content
+      </button>
+      <div class="tab-spacer"></div>
+      <div class="top-actions">
+        <select class="theme-sel" id="themeSelect" onchange="applyTheme(this.value)">
+          <option value="">👑 Obsidian & Gold</option>
+          <option value="theme-chalkboard">📐 Chalkboard & Gold</option>
+          <option value="theme-parchment">📜 Cambridge Parchment</option>
+          <option value="theme-navy">🌌 Prussian Navy</option>
+        </select>
+        <button class="top-btn" onclick="exportPng()">📸 Export PNG</button>
+        <button class="top-btn gold" onclick="openVideoModal()">🎬 Export Video</button>
+      </div>
+    </div>
+
+    <!-- ===== PREVIEW TAB ===== -->
+    <div class="tab-panel preview-tab active" id="panelPreview">
+      <div class="frame-scaler" id="frameScaler">
+        <div class="frame-canvas" id="frameCanvas">
+          <!-- BG Layers -->
+          <div class="bg-noise"></div>
+          <div class="bg-vignette"></div>
+          <!-- Corners -->
+          <div class="co co-tl"></div><div class="co co-tr"></div>
+          <div class="co co-bl"></div><div class="co co-br"></div>
+
+          <!-- TOP BAR -->
+          <header class="frame-top">
+            <div class="series-tag">
+              <span class="series-dot">◆</span>
+              <span id="fSeriesTitle">THE ARCHITECTS OF REASON</span>
+              <span class="series-sep">|</span>
+              <span class="series-sub">FIELDS MEDAL LAUREATES</span>
+            </div>
+            <div class="top-right">
+              <div class="imu-badge">⭐ IMU HIGHEST HONORS</div>
+              <div class="counter-tag" id="fCounter">01 / 01</div>
+            </div>
+          </header>
+
+          <!-- STAGE -->
+          <div class="frame-stage" id="frameStage">
+            <!-- LEFT: Portrait -->
+            <section class="portrait-col">
+              <div class="passe-partout">
+                <div class="inner-frame">
+                  <div class="pc pc-tl"></div><div class="pc pc-tr"></div>
+                  <div class="pc pc-bl"></div><div class="pc pc-br"></div>
+                  <div class="portrait-wrap" id="portraitWrap">
+                    <div class="portrait-placeholder" id="portraitPlaceholder">
+                      <div class="icon">🎓</div>
+                      <div>Upload a portrait photo</div>
+                    </div>
+                    <img class="portrait-img" id="fPortrait" src="" alt="" style="display:none">
+                    <div class="portrait-sheen"></div>
+                  </div>
+                  <div class="medal-seal">
+                    <div class="seal-inner">
+                      <div class="seal-icon">🏅</div>
+                      <div class="seal-texts">
+                        <span class="seal-title">FIELDS MEDAL</span>
+                        <span class="seal-year" id="fMedalYear">—</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="nameplate">
+                <div class="np-header">
+                  <span id="fDates">—</span>
+                  <span class="np-dot">•</span>
+                  <span id="fNationality">—</span>
+                </div>
+                <div class="np-name" id="fName">Mathematician Name</div>
+                <div class="np-native" id="fNative"></div>
+                <div class="np-inst">🏛 <span id="fInstitution">Institution</span></div>
+              </div>
+            </section>
+
+            <!-- RIGHT: Editorial -->
+            <section class="editorial-col">
+              <div class="kicker-row">
+                <div class="kicker-pill" id="fField">Mathematical Field</div>
+                <div class="honor-tag" id="fMedalSubtitle">Medal distinction</div>
+              </div>
+              <div class="breakthrough-block">
+                <div class="accent-line"></div>
+                <h2 class="bt-title" id="fBreakthrough">Breakthrough Title</h2>
+              </div>
+              <div class="citation-card">
+                <div class="cite-qmark">"</div>
+                <p class="cite-text" id="fCitation">Official citation text from the International Mathematical Union.</p>
+                <div class="cite-author">— International Mathematical Union</div>
+              </div>
+              <div class="eq-panel">
+                <div class="eq-label">✦ Signature Formula</div>
+                <div class="eq-render" id="fEquation"></div>
+              </div>
+            </section>
+          </div>
+
+        </div><!-- .frame-canvas -->
+      </div><!-- .frame-scaler -->
+
+      <!-- Bottom Nav -->
+      <div class="bottom-nav">
+        <button class="nav-btn" id="prevBtn" title="Previous (← key)">‹</button>
+        <span class="nav-label" id="navLabel">1 / 1</span>
+        <button class="nav-btn" id="nextBtn" title="Next (→ key)">›</button>
+      </div>
+    </div><!-- panelPreview -->
+
+    <!-- ===== EDIT TAB ===== -->
+    <div class="tab-panel edit-tab" id="panelEdit">
+      <div class="edit-panel" id="editPanel">
+
+        <!-- IDENTITY -->
+        <div class="form-section">
+          <div class="section-title">Identity & Biographical Details</div>
+          <div class="form-row">
+            <div class="fg">
+              <label>Full Name *</label>
+              <input class="fi" id="eName" placeholder="e.g. Maryam Mirzakhani">
+            </div>
+            <div class="fg">
+              <label>Native Language Name</label>
+              <input class="fi" id="eNative" placeholder="e.g. مریم میرزاخانی">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="fg">
+              <label>Born – Died (or Present)</label>
+              <input class="fi" id="eLifespan" placeholder="1977 – 2017">
+            </div>
+            <div class="fg">
+              <label>Nationality</label>
+              <input class="fi" id="eNationality" placeholder="Iranian / American">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="fg">
+              <label>Institution / University</label>
+              <input class="fi" id="eInstitution" placeholder="Stanford University">
+            </div>
+            <div class="fg">
+              <label>⏱️ Slide Duration in Video (Seconds)</label>
+              <input class="fi fi-mono" type="number" min="1" max="120" step="0.5" id="eDuration" placeholder="5">
+            </div>
+          </div>
+        </div>
+
+        <!-- PORTRAIT PHOTO -->
+        <div class="form-section">
+          <div class="section-title">Portrait Photo</div>
+          
+          <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileUpload(event)">
+          
+          <div class="photo-picker-box" id="photoPickerBox">
+            <div class="photo-thumb-area" id="photoThumbArea" onclick="document.getElementById('fileInput').click()" title="Click to change photo">
+              <img id="formPortraitImg" src="" alt="Portrait" style="display:none">
+              <div id="formPortraitPh" class="photo-thumb-ph">🎓 Click to Upload</div>
+            </div>
+            
+            <div class="photo-picker-controls">
+              <div class="photo-picker-title">Portrait Photo File</div>
+              <div class="photo-picker-desc">Upload from your computer (e.g. from <code>D:\Fields medal pictures\</code>) or drag image here.</div>
+              <div class="photo-btn-row">
+                <button type="button" class="btn-pc-upload" onclick="document.getElementById('fileInput').click()">
+                  📁 Choose File from PC
+                </button>
+                <button type="button" class="btn-remove-photo" id="btnRemovePhoto" onclick="removePortrait()">
+                  ✕ Remove Photo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="url-row">
+            <input class="url-input" id="ePortraitUrl" placeholder="Or enter web URL (https://...)">
+            <button type="button" class="url-btn" onclick="applyPortraitUrl()">Apply URL</button>
+          </div>
+        </div>
+
+        <!-- MEDAL & HONORS -->
+        <div class="form-section">
+          <div class="section-title">Fields Medal & Honors</div>
+          <div class="form-row">
+            <div class="fg">
+              <label>Medal & Year</label>
+              <input class="fi" id="eMedal" placeholder="Fields Medal (2014)">
+            </div>
+            <div class="fg">
+              <label>Distinction Subtitle</label>
+              <input class="fi" id="eMedalSubtitle" placeholder="First woman recipient">
+            </div>
+          </div>
+        </div>
+
+        <!-- MATHEMATICAL CONTENT -->
+        <div class="form-section">
+          <div class="section-title">Mathematical Content</div>
+          <div class="fg">
+            <label>Mathematical Field / Discipline</label>
+            <input class="fi" id="eField" placeholder="Hyperbolic Geometry & Moduli Spaces">
+          </div>
+          <div class="fg">
+            <label>Seminal Breakthrough — Frame Headline</label>
+            <input class="fi" id="eBreakthrough" placeholder="Moduli Space Volume & Geodesic Dynamics">
+          </div>
+          <div class="fg">
+            <label>Official IMU Citation</label>
+            <textarea class="fi" id="eCitation" rows="2" placeholder="For her outstanding contributions to..."></textarea>
+          </div>
+          <div class="fg">
+            <label>One-line Summary (Footer)</label>
+            <input class="fi" id="eSummary" placeholder="Brief summary shown in the footer bar">
+          </div>
+        </div>
+
+        <!-- KEY CONTRIBUTIONS -->
+        <div class="form-section">
+          <div class="section-title">3 Key Contributions</div>
+          <div class="point-card">
+            <div class="point-card-header"><div class="point-num">1</div><label style="color:var(--gold-light);font-size:12px;font-weight:700">First Contribution</label></div>
+            <div class="fg"><label>Title / Label</label><input class="fi" id="eP1Label" placeholder="e.g. Moduli Volumes"></div>
+            <div class="fg"><label>Description</label><textarea class="fi" id="eP1Detail" rows="2" placeholder="Brief explanation of the contribution"></textarea></div>
+          </div>
+          <div class="point-card">
+            <div class="point-card-header"><div class="point-num">2</div><label style="color:var(--gold-light);font-size:12px;font-weight:700">Second Contribution</label></div>
+            <div class="fg"><label>Title / Label</label><input class="fi" id="eP2Label" placeholder="e.g. Magic Wand Theorem"></div>
+            <div class="fg"><label>Description</label><textarea class="fi" id="eP2Detail" rows="2" placeholder="Brief explanation"></textarea></div>
+          </div>
+          <div class="point-card">
+            <div class="point-card-header"><div class="point-num">3</div><label style="color:var(--gold-light);font-size:12px;font-weight:700">Third Contribution</label></div>
+            <div class="fg"><label>Title / Label</label><input class="fi" id="eP3Label" placeholder="e.g. Geodesic Asymptotics"></div>
+            <div class="fg"><label>Description</label><textarea class="fi" id="eP3Detail" rows="2" placeholder="Brief explanation"></textarea></div>
+          </div>
+        </div>
+
+        <!-- EQUATION -->
+        <div class="form-section">
+          <div class="section-title">Signature Equation (LaTeX)</div>
+          <div class="fg">
+            <label>LaTeX Formula Code</label>
+            <input class="fi fi-mono" id="eEquation" placeholder="\lim_{L \to \infty} \frac{N(X,L)}{L^{6g}} = c(X)">
+          </div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Examples: <code style="color:var(--gold);background:#1a1f2e;padding:2px 6px;border-radius:4px">\frac{\partial g_{ij}}{\partial t} = -2R_{ij}</code> &nbsp; <code style="color:var(--gold);background:#1a1f2e;padding:2px 6px;border-radius:4px">e^{i\pi}+1=0</code></div>
+        </div>
+
+      </div><!-- .edit-panel -->
+
+      <!-- Right preview strip -->
+      <div class="edit-preview-strip">
+        <div class="edit-preview-title">Live Preview</div>
+        <div id="editMiniPortrait">
+          <div class="edit-mini-ph">🎓</div>
+        </div>
+        <div class="edit-meta">
+          <div class="edit-meta-name" id="editMetaName">—</div>
+          <div class="edit-meta-medal" id="editMetaMedal">—</div>
+          <div class="edit-meta-field" id="editMetaField">—</div>
+        </div>
+        <div style="padding:0 18px 18px;display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:11px;color:var(--text-3);letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:4px">Tips</div>
+          <div style="font-size:12px;color:var(--text-3);line-height:1.6">
+            ✓ Click <strong style="color:var(--text-2)">Save Changes</strong> to apply edits to the frame.<br><br>
+            ✓ Changes are <strong style="color:#4caf50">auto-saved</strong> to this browser and persist even after closing the tab.<br><br>
+            ✓ Upload any photo from your computer — no internet needed.<br><br>
+            ✓ Use the <strong style="color:var(--text-2)">Frame Preview</strong> tab to see the final 1920×1080 result.<br><br>
+            ✓ Export as PNG to use in video editors.
+          </div>
+        </div>
+      </div>
+
+      <!-- Save Bar (sticky bottom) -->
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveEdits()">✓ Save Changes</button>
+        <button class="discard-btn" onclick="discardEdits()">Discard</button>
+        <span class="save-hint">Changes apply instantly to the preview frame</span>
+        <span class="autosave-tag" id="autosaveTag">✓ Saved</span>
+      </div>
+    </div><!-- panelEdit -->
+
+<!-- ===== EXPORT VIDEO MODAL ===== -->
+<div class="video-modal-backdrop" id="videoModalBackdrop" style="display:none">
+  <div class="video-modal">
+    <div class="video-modal-header">
+      <div class="video-modal-title">
+        <span>🎬</span> Full Video Exporter (MP4 / WebM)
+      </div>
+      <button class="close-modal-btn" onclick="closeVideoModal()">✕</button>
+    </div>
+
+    <div class="video-modal-body">
+      <!-- Summary metrics -->
+      <div class="video-summary-box">
+        <div class="v-sum-item">
+          <span class="v-sum-label">TOTAL SLIDES</span>
+          <span class="v-sum-val" id="vTotalSlides">8 Slides</span>
+        </div>
+        <div class="v-sum-item">
+          <span class="v-sum-label">TOTAL RUNTIME</span>
+          <span class="v-sum-val gold" id="vTotalDuration">00:40</span>
+        </div>
+        <div class="v-sum-item">
+          <span class="v-sum-label">RESOLUTION</span>
+          <span class="v-sum-val">1920×1080 (16:9)</span>
+        </div>
+      </div>
+
+      <!-- Slide Timing Grid -->
+      <div class="v-section-title">Configure Timing for Each Slide</div>
+      <div class="slide-timing-list" id="slideTimingList">
+        <!-- Injected dynamically -->
+      </div>
+
+      <!-- Video Settings -->
+      <div class="v-settings-row">
+        <div class="v-setting-col">
+          <label>Video Format</label>
+          <select id="vFormatSelect" class="fi">
+            <option value="mp4">MP4 Video (.mp4)</option>
+            <option value="webm">WebM Video (.webm)</option>
+          </select>
+        </div>
+        <div class="v-setting-col">
+          <label>Transition Style</label>
+          <select id="vTransitionSelect" class="fi">
+            <option value="fade">Smooth Cross-Dissolve (0.5s)</option>
+            <option value="cut">Instant Cut</option>
+          </select>
+        </div>
+        <div class="v-setting-col">
+          <label>Framerate</label>
+          <select id="vFpsSelect" class="fi">
+            <option value="30">30 FPS (Standard)</option>
+            <option value="60">60 FPS (Ultra Smooth)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Live Rendering Status & Preview Monitor -->
+      <div class="v-render-status-box" id="vRenderStatusBox" style="display:none">
+        <div class="v-status-top">
+          <span id="vStatusText" style="font-weight:600">Rendering frames...</span>
+          <span id="vStatusPercent" class="v-percent">0%</span>
+        </div>
+        <div class="v-progress-bar-wrap">
+          <div class="v-progress-bar-fill" id="vProgressFill"></div>
+        </div>
+        <div class="v-preview-monitor-wrap">
+          <canvas id="vMonitorCanvas" width="640" height="360" class="v-monitor-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="video-modal-footer">
+      <button class="modal-cancel-btn" onclick="closeVideoModal()" id="vCancelBtn">Cancel</button>
+      <button class="modal-export-btn" id="vStartExportBtn" onclick="startVideoExport()">
+        ▶ Start Video Export
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================================
+//  DEFAULT DATA — 8 Fields Medalists
+// =====================================================================
+const DEFAULT_DATA = [
+  {
+    id: "mirzakhani",
+    name: "Maryam Mirzakhani",
+    nativeName: "مریم میرزاخانی",
+    lifespan: "1977 – 2017",
+    nationality: "Iranian / American",
+    institution: "Stanford University",
+    medal: "Fields Medal (2014)",
+    medalSubtitle: "First woman recipient of the Fields Medal",
+    portrait: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Maryam_Mirzakhani_in_Seoul_2014.jpg/800px-Maryam_Mirzakhani_in_Seoul_2014.jpg",
+    field: "Hyperbolic Geometry & Moduli Spaces",
+    citation: "For her outstanding contributions to the dynamics and geometry of Riemann surfaces and their moduli spaces.",
+    breakthrough: "Moduli Space Volume & Geodesic Dynamics",
+    summary: "Discovered breathtaking connections between hyperbolic geometry and dynamical systems.",
+    keyPoints: [
+      { label: "Moduli Volumes", detail: "Calculated Weil-Petersson volumes of moduli spaces of bordered Riemann surfaces, yielding a new proof of Witten's conjecture." },
+      { label: "Magic Wand Theorem", detail: "Proved with Eskin that closures of SL(2,ℝ) orbits in moduli space are rigid complex algebraic subvarieties." },
+      { label: "Geodesic Asymptotics", detail: "Derived polynomial growth rates for simple closed geodesics of given length on hyperbolic surfaces." }
+    ],
+    equation: "\\lim_{L \\to \\infty} \\frac{N(X, L)}{L^{6g-6+2n}} = c(X)"
+  },
+  {
+    id: "tao",
+    name: "Terence Tao",
+    nativeName: "陶哲轩",
+    lifespan: "1975 – Present",
+    nationality: "Australian / American",
+    institution: "UCLA",
+    medal: "Fields Medal (2006)",
+    medalSubtitle: "Recognized for breathtaking mathematical breadth",
+    portrait: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Terence_Tao_2019.jpg/800px-Terence_Tao_2019.jpg",
+    field: "Harmonic Analysis, PDE & Number Theory",
+    citation: "For his contributions to partial differential equations, combinatorics, harmonic analysis and additive number theory.",
+    breakthrough: "Green-Tao Theorem on Primes in Arithmetic Progressions",
+    summary: "Proved with Ben Green that primes contain arbitrarily long arithmetic progressions.",
+    keyPoints: [
+      { label: "Primes in Progression", detail: "Established that there exist arbitrarily long arithmetic progressions entirely contained within the prime numbers." },
+      { label: "Compressed Sensing", detail: "Co-founded rigorous mathematical theory for reconstructing signals from sparse measurements." },
+      { label: "Dispersive PDEs", detail: "Solved critical threshold conjectures for wave maps using multilinear spacetime estimates." }
+    ],
+    equation: "\\exists a, d : a, a+d, \\ldots, a+(k-1)d \\text{ all prime}"
+  },
+  {
+    id: "perelman",
+    name: "Grigori Perelman",
+    nativeName: "Григорий Перельман",
+    lifespan: "1966 – Present",
+    nationality: "Russian",
+    institution: "Steklov Mathematical Institute",
+    medal: "Fields Medal (2006 – Declined)",
+    medalSubtitle: "Solved the 100-year-old Poincaré Conjecture",
+    portrait: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Grigori_Perelman_2011_%28cropped%29.jpg/800px-Grigori_Perelman_2011_%28cropped%29.jpg",
+    field: "Geometric Analysis & Differential Geometry",
+    citation: "For his contributions to geometry and his revolutionary insights into the structure of the Ricci flow.",
+    breakthrough: "Proof of Poincaré & Geometrization Conjectures",
+    summary: "Used Ricci Flow with surgery to classify all compact 3-dimensional manifolds.",
+    keyPoints: [
+      { label: "Poincaré Conjecture", detail: "Proved every simply connected closed 3-manifold is homeomorphic to the 3-sphere, a 100-year-old Millennium Problem." },
+      { label: "Ricci Flow Surgery", detail: "Introduced the W-entropy functional to safely navigate singularities in the geometric flow." },
+      { label: "Soul Conjecture", detail: "Resolved Cheeger-Gromoll's Soul Conjecture in Riemannian geometry with a legendary 4-page proof in 1994." }
+    ],
+    equation: "\\frac{\\partial g_{ij}}{\\partial t} = -2 R_{ij}"
+  },
+  {
+    id: "grothendieck",
+    name: "Alexander Grothendieck",
+    nativeName: "Alexandre Grothendieck",
+    lifespan: "1928 – 2014",
+    nationality: "Stateless / French",
+    institution: "IHÉS",
+    medal: "Fields Medal (1966)",
+    medalSubtitle: "Supreme Architect of Modern Algebraic Geometry",
+    portrait: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Grothendieck.jpg/800px-Grothendieck.jpg",
+    field: "Algebraic Geometry & Category Theory",
+    citation: "For building on work of Weil and Zariski and effecting fundamental advances in algebraic geometry.",
+    breakthrough: "Scheme Theory, Étale Cohomology & Motives",
+    summary: "Rebuilt algebraic geometry from its foundations using scheme theory and sheaf cohomology.",
+    keyPoints: [
+      { label: "Grothendieck-Riemann-Roch", detail: "Generalized Hirzebruch's theorem from varieties to morphisms between arbitrary quasi-projective schemes." },
+      { label: "Étale Cohomology", detail: "Constructed the cohomological framework enabling Deligne's proof of the legendary Weil Conjectures." },
+      { label: "EGA & SGA", detail: "Authored thousands of pages establishing modern algebraic geometry: schemes, sites, and topoi." }
+    ],
+    equation: "\\operatorname{ch}(f_! \\mathcal{F}) \\cdot \\operatorname{td}(Y) = f_*(\\operatorname{ch}(\\mathcal{F}) \\cdot \\operatorname{td}(X))"
+  },
+  {
+    id: "scholze",
+    name: "Peter Scholze",
+    nativeName: "Peter Scholze",
+    lifespan: "1987 – Present",
+    nationality: "German",
+    institution: "Max Planck Institute · Bonn",
+    medal: "Fields Medal (2018)",
+    medalSubtitle: "Awarded at 30 for transforming arithmetic geometry",
+    portrait: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Peter_Scholze_2018.jpg/800px-Peter_Scholze_2018.jpg",
+    field: "Arithmetic Algebraic Geometry & p-adic Theory",
+    citation: "For transforming arithmetic algebraic geometry over p-adic fields through his introduction of perfectoid spaces.",
+    breakthrough: "Theory of Perfectoid Spaces",
+    summary: "Created a magical bridge between geometry in characteristic 0 and characteristic p.",
+    keyPoints: [
+      { label: "Tilting Equivalence", detail: "Established equivalence between perfectoid algebras in characteristic 0 and characteristic p." },
+      { label: "Local Langlands", detail: "Constructed Galois representations for torsion classes in the cohomology of Shimura varieties." },
+      { label: "Condensed Mathematics", detail: "Co-created with Clausen a reformulation of topology uniting algebra, geometry, and analysis." }
+    ],
+    equation: "X^{\\flat} = \\varprojlim_{x \\mapsto x^p} X"
+  },
+  {
+    id: "huh",
+    name: "June Huh",
+    nativeName: "허준이",
+    lifespan: "1983 – Present",
+    nationality: "American / South Korean",
+    institution: "Princeton University",
+    medal: "Fields Medal (2022)",
+    medalSubtitle: "Bridged Algebraic Geometry & Combinatorics",
+    portrait: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/June_Huh_2022.jpg/800px-June_Huh_2022.jpg",
+    field: "Combinatorial Algebraic Geometry",
+    citation: "For bringing the ideas of Hodge theory to combinatorics and the proof of the Heron-Rota-Welsh conjecture.",
+    breakthrough: "Hodge Theory for Matroids & Log-Concavity",
+    summary: "Discovered combinatorial structures obey deep geometric laws like Hard Lefschetz.",
+    keyPoints: [
+      { label: "Read's Conjecture", detail: "Proved the chromatic polynomial coefficients of any graph form a strictly log-concave sequence." },
+      { label: "Rota's Conjecture", detail: "Proved with Adiprasito & Katz that characteristic polynomial coefficients of any matroid are log-concave." },
+      { label: "Lorentzian Polynomials", detail: "Developed with Brändén a unified theory connecting discrete convexity and stable polynomials." }
+    ],
+    equation: "a_k^2 \\geq a_{k-1} \\cdot a_{k+1} \\quad \\text{(Log-Concave)}"
+  },
+  {
+    id: "villani",
+    name: "Cédric Villani",
+    nativeName: "Cédric Villani",
+    lifespan: "1973 – Present",
+    nationality: "French",
+    institution: "Sorbonne Université",
+    medal: "Fields Medal (2010)",
+    medalSubtitle: "Master of Kinetic Theory & Optimal Transport",
+    portrait: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/C%C3%A9dric_Villani_2015.jpg/800px-C%C3%A9dric_Villani_2015.jpg",
+    field: "Mathematical Physics & Kinetic Theory",
+    citation: "For his proofs of nonlinear Landau damping and convergence to equilibrium for the Boltzmann equation.",
+    breakthrough: "Nonlinear Landau Damping in Plasmas",
+    summary: "Proved electrostatic perturbations in plasmas decay exponentially without dissipation.",
+    keyPoints: [
+      { label: "Landau Damping", detail: "Mathematically proved non-linear stability of equilibria in Vlasov-Poisson plasma equations." },
+      { label: "Boltzmann Equation", detail: "Quantified exact rates of convergence towards Maxwellian equilibrium in gases via optimal transport." },
+      { label: "Synthetic Ricci Curvature", detail: "Established Ricci curvature lower bounds on metric measure spaces with Lott and Sturm." }
+    ],
+    equation: "\\frac{\\partial f}{\\partial t} + v \\cdot \\nabla_x f - \\nabla_x\\phi \\cdot \\nabla_v f = 0"
+  },
+  {
+    id: "venkatesh",
+    name: "Akshay Venkatesh",
+    nativeName: "Akshay Venkatesh",
+    lifespan: "1981 – Present",
+    nationality: "Australian / Indian",
+    institution: "Institute for Advanced Study, Princeton",
+    medal: "Fields Medal (2018)",
+    medalSubtitle: "Synthesizer of Dynamics, Number Theory & Topology",
+    portrait: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Akshay_Venkatesh_2018.jpg/800px-Akshay_Venkatesh_2018.jpg",
+    field: "Number Theory & Automorphic Forms",
+    citation: "For his synthesis of analytic number theory, homogeneous dynamics, topology, and representation theory.",
+    breakthrough: "Subconvexity Problem for Automorphic L-functions",
+    summary: "Solved the subconvexity problem and discovered hidden arithmetic symmetries in topology.",
+    keyPoints: [
+      { label: "Subconvexity Bounds", detail: "Developed revolutionary dynamical approach for L-functions using microlocal methods." },
+      { label: "Torsion & Homology", detail: "Discovered derived Hecke actions and hidden symmetries in cohomology of locally symmetric spaces." },
+      { label: "Equidistribution", detail: "Proved equidistribution theorems for unipotent flow orbits in arithmetic moduli spaces." }
+    ],
+    equation: "L\\!\\left(\\tfrac{1}{2},\\,\\pi\\otimes\\chi\\right) \\ll q^{1/4-\\delta}"
+  }
+];
+
+// =====================================================================
+//  STATE
+// =====================================================================
+let playlist = [];
+let currentIdx = 0;
+const STORAGE_KEY = 'math_video_deck_v3';
+
+function loadData() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        playlist = parsed.map(m => ({ ...m, duration: (parseFloat(m.duration) > 0 ? parseFloat(m.duration) : 5) }));
+        return;
+      }
+    }
+  } catch(e) {}
+  playlist = JSON.parse(JSON.stringify(DEFAULT_DATA)).map(m => ({ ...m, duration: 5 }));
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(playlist));
+    flashAutosave();
+  } catch(e) {}
+}
+
+// =====================================================================
+//  RENDER: LEFT SIDEBAR LIST
+// =====================================================================
+function renderList() {
+  const list = document.getElementById('matList');
+  list.innerHTML = '';
+  playlist.forEach((m, idx) => {
+    const card = document.createElement('div');
+    card.className = 'mat-card' + (idx === currentIdx ? ' active' : '');
+    card.onclick = () => selectMathematician(idx);
+
+    const thumbHtml = m.portrait
+      ? `<img class="mat-thumb" src="${m.portrait}" alt="${m.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`+
+        `<div class="mat-thumb-placeholder" style="display:none">🎓</div>`
+      : `<div class="mat-thumb-placeholder">🎓</div>`;
+
+    const year = (m.medal.match(/\d{4}/) || ['—'])[0];
+    const dur = m.duration || 5;
+    card.innerHTML = `
+      ${thumbHtml}
+      <div class="mat-info">
+        <div class="mat-name">${m.name}</div>
+        <div class="mat-year">${year} <span style="color:var(--text-3);font-size:10px;margin-left:6px">⏱️ ${dur}s</span></div>
+        <div class="mat-field-tag">${m.field}</div>
+      </div>
+      <button class="mat-del-btn" onclick="deleteMathematician(event,${idx})" title="Delete">✕</button>
+    `;
+    list.appendChild(card);
+  });
+}
+
+// =====================================================================
+//  RENDER: FRAME PREVIEW
+// =====================================================================
+function renderFrame(animate = true) {
+  const m = playlist[currentIdx];
+  if (!m) return;
+
+  const total = playlist.length;
+  const idx1 = String(currentIdx + 1).padStart(2,'0');
+  const total1 = String(total).padStart(2,'0');
+  document.getElementById('fCounter').textContent = `${idx1} / ${total1}`;
+  document.getElementById('navLabel').textContent = `${currentIdx+1} / ${total}`;
+
+  // Portrait
+  const img = document.getElementById('fPortrait');
+  const ph  = document.getElementById('portraitPlaceholder');
+  if (m.portrait) {
+    img.src = m.portrait;
+    img.style.display = 'block';
+    ph.style.display  = 'none';
+  } else {
+    img.style.display = 'none';
+    ph.style.display  = 'flex';
+  }
+
+  // Medal year
+  const yr = (m.medal.match(/\d{4}/) || ['—'])[0];
+  document.getElementById('fMedalYear').textContent = yr;
+
+  // Nameplate
+  document.getElementById('fDates').textContent       = m.lifespan || '—';
+  document.getElementById('fNationality').textContent = m.nationality || '—';
+  document.getElementById('fName').textContent        = m.name || '—';
+  document.getElementById('fNative').textContent      = m.nativeName || '';
+  document.getElementById('fInstitution').textContent = m.institution || '—';
+
+  // Editorial right
+  document.getElementById('fField').textContent        = m.field || '—';
+  document.getElementById('fMedalSubtitle').textContent = m.medalSubtitle || '';
+  document.getElementById('fBreakthrough').textContent  = m.breakthrough || '—';
+  document.getElementById('fCitation').textContent      = m.citation || '—';
+  const sumEl = document.getElementById('fSummary');
+  if (sumEl) sumEl.textContent = m.summary || '';
+
+  // Contribution cards (if present)
+  const contribs = document.getElementById('fContribs');
+  if (contribs) {
+    contribs.innerHTML = '';
+    (m.keyPoints || []).forEach(pt => {
+      const c = document.createElement('div');
+      c.className = 'cc';
+      c.innerHTML = `<span class="cc-tag">${pt.label}</span><p class="cc-detail">${pt.detail}</p>`;
+      contribs.appendChild(c);
+    });
+  }
+
+  // Equation (KaTeX)
+  const eqEl = document.getElementById('fEquation');
+  if (window.katex && m.equation) {
+    try {
+      katex.render(m.equation, eqEl, { throwOnError: false, displayMode: true });
+    } catch(e) { eqEl.textContent = m.equation; }
+  } else {
+    eqEl.textContent = m.equation || '';
+  }
+
+  // Animate stage
+  if (animate) {
+    const stage = document.getElementById('frameStage');
+    stage.classList.remove('slide-in');
+    void stage.offsetWidth;
+    stage.classList.add('slide-in');
+  }
+}
+
+// =====================================================================
+//  POPULATE EDIT FORM
+// =====================================================================
+function populateEditForm() {
+  const m = playlist[currentIdx];
+  if (!m) return;
+
+  document.getElementById('eName').value          = m.name || '';
+  document.getElementById('eNative').value        = m.nativeName || '';
+  document.getElementById('eLifespan').value      = m.lifespan || '';
+  document.getElementById('eNationality').value   = m.nationality || '';
+  document.getElementById('eInstitution').value   = m.institution || '';
+  document.getElementById('eDuration').value      = m.duration || 5;
+  document.getElementById('eMedal').value         = m.medal || '';
+  document.getElementById('eMedalSubtitle').value = m.medalSubtitle || '';
+  document.getElementById('eField').value         = m.field || '';
+  document.getElementById('eBreakthrough').value  = m.breakthrough || '';
+  document.getElementById('eCitation').value      = m.citation || '';
+  document.getElementById('eSummary').value       = m.summary || '';
+  document.getElementById('eEquation').value      = m.equation || '';
+  document.getElementById('ePortraitUrl').value   = (m.portrait && !m.portrait.startsWith('data:')) ? m.portrait : '';
+
+  const kp = m.keyPoints || [];
+  document.getElementById('eP1Label').value  = kp[0] ? kp[0].label  : '';
+  document.getElementById('eP1Detail').value = kp[0] ? kp[0].detail : '';
+  document.getElementById('eP2Label').value  = kp[1] ? kp[1].label  : '';
+  document.getElementById('eP2Detail').value = kp[1] ? kp[1].detail : '';
+  document.getElementById('eP3Label').value  = kp[2] ? kp[2].label  : '';
+  document.getElementById('eP3Detail').value = kp[2] ? kp[2].detail : '';
+
+  // Photo Thumbnail Preview
+  const imgEl = document.getElementById('formPortraitImg');
+  const phEl  = document.getElementById('formPortraitPh');
+  const remBtn = document.getElementById('btnRemovePhoto');
+  
+  if (m.portrait) {
+    imgEl.src = m.portrait;
+    imgEl.style.display = 'block';
+    if (phEl) phEl.style.display = 'none';
+    if (remBtn) remBtn.style.display = 'inline-block';
+  } else {
+    imgEl.src = '';
+    imgEl.style.display = 'none';
+    if (phEl) phEl.style.display = 'block';
+    if (remBtn) remBtn.style.display = 'none';
+  }
+
+  // Mini preview
+  updateEditPreview();
+}
+
+function removePortrait() {
+  if (playlist[currentIdx]) {
+    playlist[currentIdx].portrait = '';
+    saveData();
+    populateEditForm();
+    renderFrame(false);
+    renderList();
+    showToast('Portrait photo removed');
+  }
+}
+
+function updateEditPreview() {
+  const name     = document.getElementById('eName').value || '—';
+  const medal    = document.getElementById('eMedal').value || '—';
+  const field    = document.getElementById('eField').value || '—';
+  const portrait = playlist[currentIdx]?.portrait;
+
+  document.getElementById('editMetaName').textContent  = name;
+  document.getElementById('editMetaMedal').textContent = medal;
+  document.getElementById('editMetaField').textContent = field;
+
+  const mpEl = document.getElementById('editMiniPortrait');
+  if (portrait) {
+    mpEl.innerHTML = `<img class="edit-mini-portrait" src="${portrait}" alt="${name}" onerror="this.innerHTML='<div class=edit-mini-ph>🎓</div>'">`;
+  } else {
+    mpEl.innerHTML = `<div class="edit-mini-ph">🎓</div>`;
+  }
+}
+
+// =====================================================================
+//  SELECT / NAVIGATE
+// =====================================================================
+function selectMathematician(idx) {
+  currentIdx = idx;
+  renderList();
+  renderFrame();
+  populateEditForm();
+}
+
+function prevMathematician() {
+  selectMathematician((currentIdx - 1 + playlist.length) % playlist.length);
+}
+
+function nextMathematician() {
+  selectMathematician((currentIdx + 1) % playlist.length);
+}
+
+// =====================================================================
+//  ADD / DELETE
+// =====================================================================
+function addMathematician() {
+  const newEntry = {
+    id: 'custom_' + Date.now(),
+    name: "New Mathematician",
+    nativeName: "",
+    lifespan: "1900 – 2000",
+    nationality: "International",
+    institution: "University / Institute",
+    duration: 5,
+    medal: "Fields Medal (Year)",
+    medalSubtitle: "Monumental contribution to mathematics",
+    portrait: "",
+    field: "Pure & Applied Mathematics",
+    citation: "For revolutionary breakthroughs reshaping mathematical understanding.",
+    breakthrough: "Fundamental Theorem & Structural Foundations",
+    summary: "Transformed mathematical analysis with elegant proofs and conceptual depth.",
+    keyPoints: [
+      { label: "Core Discovery",   detail: "Formulated universal invariant principles connecting geometry and analysis." },
+      { label: "Seminal Paper",    detail: "Published milestone treatise establishing rigorous modern foundations." },
+      { label: "Global Legacy",    detail: "Inspired generations of mathematicians through visionary conjectures." }
+    ],
+    equation: "e^{i\\pi} + 1 = 0"
+  };
+  playlist.push(newEntry);
+  saveData();
+  selectMathematician(playlist.length - 1);
+  switchTab('edit');
+  showToast('✓ New mathematician added — fill in their details!');
+}
+
+function deleteMathematician(e, idx) {
+  e.stopPropagation();
+  if (playlist.length <= 1) { showToast('Cannot delete the only mathematician in the deck!'); return; }
+  if (!confirm(`Delete "${playlist[idx].name}" from your deck?`)) return;
+  playlist.splice(idx, 1);
+  if (currentIdx >= playlist.length) currentIdx = playlist.length - 1;
+  saveData();
+  renderList();
+  renderFrame();
+  populateEditForm();
+  showToast('Deleted successfully');
+}
+
+// =====================================================================
+//  SAVE / DISCARD EDITS
+// =====================================================================
+function saveEdits() {
+  const m = playlist[currentIdx];
+  m.name          = document.getElementById('eName').value.trim() || m.name;
+  m.nativeName    = document.getElementById('eNative').value.trim();
+  m.lifespan      = document.getElementById('eLifespan').value.trim();
+  m.nationality   = document.getElementById('eNationality').value.trim();
+  m.institution   = document.getElementById('eInstitution').value.trim();
+  const durVal    = parseFloat(document.getElementById('eDuration').value);
+  m.duration      = !isNaN(durVal) && durVal > 0 ? durVal : 5;
+  m.medal         = document.getElementById('eMedal').value.trim();
+  m.medalSubtitle = document.getElementById('eMedalSubtitle').value.trim();
+  m.field         = document.getElementById('eField').value.trim();
+  m.breakthrough  = document.getElementById('eBreakthrough').value.trim();
+  m.citation      = document.getElementById('eCitation').value.trim();
+  m.summary       = document.getElementById('eSummary').value.trim();
+  m.equation      = document.getElementById('eEquation').value.trim();
+  m.keyPoints = [
+    { label: document.getElementById('eP1Label').value.trim(),  detail: document.getElementById('eP1Detail').value.trim() },
+    { label: document.getElementById('eP2Label').value.trim(),  detail: document.getElementById('eP2Detail').value.trim() },
+    { label: document.getElementById('eP3Label').value.trim(),  detail: document.getElementById('eP3Detail').value.trim() }
+  ].filter(p => p.label);
+
+  // Portrait URL (only overwrite if field is non-empty and portrait is a URL not a data: blob)
+  const urlVal = document.getElementById('ePortraitUrl').value.trim();
+  if (urlVal && urlVal.startsWith('http')) m.portrait = urlVal;
+
+  saveData();
+  renderList();
+  renderFrame(false);
+  updateEditPreview();
+  showToast('✓ Changes saved to frame!');
+}
+
+function discardEdits() {
+  populateEditForm();
+  showToast('Discarded — form reset to saved values');
+}
+
+// =====================================================================
+//  IMAGE HANDLING
+// =====================================================================
+function processImageFile(file) {
+  if (!file || !file.type.startsWith('image/')) {
+    showToast('Please select an image file (JPG, PNG, WEBP)');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    playlist[currentIdx].portrait = ev.target.result;
+    saveData();
+    populateEditForm();
+    renderFrame(false);
+    renderList();
+    showToast('✓ Portrait photo loaded from computer!');
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (file) processImageFile(file);
+}
+
+function setupDragAndDrop() {
+  const area = document.getElementById('photoPickerBox');
+  if (!area) return;
+  ['dragenter', 'dragover'].forEach(eventName => {
+    area.addEventListener(eventName, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      area.style.borderColor = 'var(--gold)';
+      area.style.background = '#181f30';
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    area.addEventListener(eventName, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      area.style.borderColor = '';
+      area.style.background = '';
+    }, false);
+  });
+
+  area.addEventListener('drop', e => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files && files.length > 0) {
+      processImageFile(files[0]);
+    }
+  }, false);
+}
+
+function applyPortraitUrl() {
+  let url = document.getElementById('ePortraitUrl').value.trim();
+  // Strip quotes if user copied as path
+  url = url.replace(/^["']|["']$/g, '');
+
+  if (!url) {
+    showToast('Please enter an image URL or click Browse PC');
+    return;
+  }
+
+  // Detect if user pasted a local drive absolute path (e.g. D:\ or C:\)
+  if (/^[a-zA-Z]:\\/.test(url) || url.startsWith('file:///')) {
+    showToast('⚠️ Browsers block typed disk paths. Click "Browse PC" to choose your file!');
+    document.getElementById('fileInput').click();
+    return;
+  }
+
+  // Otherwise accept web URL or relative path (e.g. images/photo.jpg)
+  playlist[currentIdx].portrait = url;
+  saveData();
+  populateEditForm();
+  renderFrame(false);
+  renderList();
+  showToast('✓ Image source applied!');
+}
+
+// =====================================================================
+//  TAB SWITCHING
+// =====================================================================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+  document.getElementById('panel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+}
+
+// =====================================================================
+//  THEME
+// =====================================================================
+function applyTheme(cls) {
+  document.body.className = cls || '';
+}
+
+function getThemeCanvasBg() {
+  const isParchment = document.body.classList.contains('theme-parchment');
+  const isNavy = document.body.classList.contains('theme-navy');
+  const isChalkboard = document.body.classList.contains('theme-chalkboard');
+  if (isParchment) return '#f6f2e8';
+  if (isNavy) return '#091322';
+  if (isChalkboard) return '#15191e';
+  return '#0c0e14';
+}
+
+// Normalize cloned DOM so html2canvas renders exact 1920x1080 frame without parent viewport clipping or offsets
+function normalizeCloneForRender(clonedDoc, themeBg) {
+  // 1. Hide UI chrome, modals, sidebars, bars and overlays
+  const hideSelectors = ['#videoModalBackdrop', '.sidebar', '.tab-bar', '.bottom-nav', '#toast'];
+  hideSelectors.forEach(sel => {
+    const el = clonedDoc.querySelector(sel);
+    if (el) el.style.display = 'none';
+  });
+
+  // 2. Normalize root elements to exact 1920x1080 without scrollbars or margins
+  clonedDoc.documentElement.style.width = '1920px';
+  clonedDoc.documentElement.style.height = '1080px';
+  clonedDoc.documentElement.style.margin = '0';
+  clonedDoc.documentElement.style.padding = '0';
+  clonedDoc.documentElement.style.overflow = 'hidden';
+
+  clonedDoc.body.style.width = '1920px';
+  clonedDoc.body.style.height = '1080px';
+  clonedDoc.body.style.margin = '0';
+  clonedDoc.body.style.padding = '0';
+  clonedDoc.body.style.overflow = 'hidden';
+  clonedDoc.body.style.background = themeBg;
+
+  // 3. Remove all parent container constraints (flex centering, overflow clipping, viewport bounds)
+  const containers = [
+    clonedDoc.querySelector('.app-shell'),
+    clonedDoc.querySelector('.main-area'),
+    clonedDoc.getElementById('panelPreview'),
+    clonedDoc.getElementById('frameScaler')
+  ];
+  containers.forEach(c => {
+    if (c) {
+      c.style.display = 'block';
+      c.style.width = '1920px';
+      c.style.height = '1080px';
+      c.style.margin = '0';
+      c.style.padding = '0';
+      c.style.overflow = 'hidden';
+      c.style.transform = 'none';
+    }
+  });
+
+  // 4. Ensure frameCanvas sits exactly at (0, 0) and measures 1920x1080
+  const frame = clonedDoc.getElementById('frameCanvas');
+  if (frame) {
+    frame.style.position = 'absolute';
+    frame.style.left = '0';
+    frame.style.top = '0';
+    frame.style.width = '1920px';
+    frame.style.height = '1080px';
+    frame.style.minWidth = '1920px';
+    frame.style.minHeight = '1080px';
+    frame.style.maxWidth = '1920px';
+    frame.style.maxHeight = '1080px';
+    frame.style.margin = '0';
+    frame.style.transform = 'none';
+    frame.style.boxShadow = 'none';
+    frame.style.background = themeBg;
+  }
+
+  // 5. Remove backdrop-filter across all nodes to eliminate square artifact boxes in html2canvas
+  clonedDoc.querySelectorAll('*').forEach(n => {
+    if (n.style && (n.style.backdropFilter || n.style.webkitBackdropFilter)) {
+      n.style.backdropFilter = 'none';
+      n.style.webkitBackdropFilter = 'none';
+    }
+  });
+}
+
+// =====================================================================
+//  EXPORT PNG (High-Res 1920×1080 / 4K UHD Master)
+// =====================================================================
+async function exportPng() {
+  if (!window.html2canvas) { showToast('html2canvas not loaded yet, please wait...'); return; }
+  
+  if (!document.getElementById('panelPreview').classList.contains('active')) {
+    switchTab('preview');
+  }
+
+  showToast('📸 Rendering high-res 16:9 frame — please wait...');
+  
+  const el = document.getElementById('frameCanvas');
+  const oldTransform = el.style.transform;
+  const oldTransition = el.style.transition;
+  const themeBg = getThemeCanvasBg();
+  
+  try {
+    el.style.transition = 'none';
+    el.style.transform = 'none';
+    void el.offsetWidth;
+
+    if (document.fonts) await document.fonts.ready;
+
+    const canvas = await html2canvas(el, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: themeBg,
+      width: 1920,
+      height: 1080,
+      windowWidth: 1920,
+      windowHeight: 1080,
+      scrollX: 0,
+      scrollY: 0,
+      x: 0,
+      y: 0,
+      logging: false,
+      onclone: (clonedDoc) => normalizeCloneForRender(clonedDoc, themeBg)
+    });
+
+    const link = document.createElement('a');
+    const safeName = (playlist[currentIdx].name || 'mathematician_frame').toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+    link.download = `${safeName}_16x9_highres.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('✓ High-res frame exported successfully!');
+  } catch(err) {
+    console.error('Export error:', err);
+    showToast('Export error. Make sure your portrait is a local uploaded file.');
+  } finally {
+    el.style.transition = oldTransition;
+    el.style.transform = oldTransform;
+  }
+}
+
+// =====================================================================
+//  VIDEO EXPORT MODAL & ENGINE (MP4 / WebM with Custom Per-Slide Timings)
+// =====================================================================
+let isVideoExporting = false;
+
+function openVideoModal() {
+  const backdrop = document.getElementById('videoModalBackdrop');
+  backdrop.style.display = 'flex';
+  
+  // Populate list & metrics
+  renderSlideTimingList();
+  updateTotalDurationDisplay();
+  
+  // Reset status UI
+  document.getElementById('vRenderStatusBox').style.display = 'none';
+  document.getElementById('vStartExportBtn').disabled = false;
+  document.getElementById('vStartExportBtn').textContent = '▶ Start Video Export';
+}
+
+function closeVideoModal() {
+  if (isVideoExporting) {
+    if (!confirm('Video rendering is in progress. Do you want to cancel?')) return;
+    isVideoExporting = false;
+  }
+  document.getElementById('videoModalBackdrop').style.display = 'none';
+}
+
+function renderSlideTimingList() {
+  const list = document.getElementById('slideTimingList');
+  list.innerHTML = '';
+  
+  playlist.forEach((m, idx) => {
+    const card = document.createElement('div');
+    card.className = 'timing-card';
+    const thumbSrc = m.portrait || '';
+    const thumbHtml = thumbSrc 
+      ? `<img class="timing-thumb" src="${thumbSrc}" onerror="this.style.display='none'">`
+      : `<div class="timing-thumb" style="display:flex;align-items:center;justify-content:center;font-size:16px">🎓</div>`;
+    
+    const dur = m.duration || 5;
+    card.innerHTML = `
+      <div class="timing-idx">#${idx + 1}</div>
+      ${thumbHtml}
+      <div class="timing-info">
+        <div class="timing-name">${m.name}</div>
+        <div class="timing-sub">${m.field}</div>
+      </div>
+      <div class="timing-dur-wrap">
+        <label>Duration:</label>
+        <input class="timing-dur-input" type="number" min="0.5" max="300" step="0.5" value="${dur}" onchange="updateSlideDuration(${idx}, this.value)">
+        <label>sec</label>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+  
+  document.getElementById('vTotalSlides').textContent = `${playlist.length} Slides`;
+}
+
+function updateSlideDuration(idx, val) {
+  const num = parseFloat(val);
+  if (playlist[idx]) {
+    playlist[idx].duration = !isNaN(num) && num > 0 ? num : 5;
+    saveData();
+    renderList();
+    updateTotalDurationDisplay();
+  }
+}
+
+function updateTotalDurationDisplay() {
+  let totalSec = playlist.reduce((acc, m) => acc + (parseFloat(m.duration) || 5), 0);
+  const mins = Math.floor(totalSec / 60);
+  const secs = Math.floor(totalSec % 60);
+  const timeStr = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')} (${totalSec.toFixed(1)}s)`;
+  document.getElementById('vTotalDuration').textContent = timeStr;
+}
+
+function renderFrameByIndex(index) {
+  const m = playlist[index];
+  if (!m) return;
+  
+  const total = playlist.length;
+  const idx1 = String(index + 1).padStart(2,'0');
+  const total1 = String(total).padStart(2,'0');
+  document.getElementById('fCounter').textContent = `${idx1} / ${total1}`;
+
+  const img = document.getElementById('fPortrait');
+  const ph  = document.getElementById('portraitPlaceholder');
+  if (m.portrait) {
+    img.src = m.portrait;
+    img.style.display = 'block';
+    ph.style.display  = 'none';
+  } else {
+    img.src = '';
+    img.style.display = 'none';
+    ph.style.display  = 'flex';
+  }
+
+  const yr = (m.medal.match(/\d{4}/) || ['—'])[0];
+  document.getElementById('fMedalYear').textContent = yr;
+
+  document.getElementById('fDates').textContent       = m.lifespan || '—';
+  document.getElementById('fNationality').textContent = m.nationality || '—';
+  document.getElementById('fName').textContent        = m.name || '—';
+  document.getElementById('fNative').textContent      = m.nativeName || '';
+  document.getElementById('fInstitution').textContent = m.institution || '—';
+
+  document.getElementById('fField').textContent        = m.field || '—';
+  document.getElementById('fMedalSubtitle').textContent = m.medalSubtitle || '';
+  document.getElementById('fBreakthrough').textContent  = m.breakthrough || '—';
+  document.getElementById('fCitation').textContent      = m.citation || '—';
+  const sumEl = document.getElementById('fSummary');
+  if (sumEl) sumEl.textContent = m.summary || '';
+
+  const eqEl = document.getElementById('fEquation');
+  eqEl.innerHTML = '';
+  if (window.katex && m.equation) {
+    try {
+      katex.render(m.equation, eqEl, { throwOnError: false, displayMode: true });
+    } catch(e) { eqEl.textContent = m.equation; }
+  } else {
+    eqEl.textContent = m.equation || '';
+  }
+}
+
+async function startVideoExport() {
+  if (isVideoExporting) return;
+  isVideoExporting = true;
+  
+  const startBtn = document.getElementById('vStartExportBtn');
+  const statusBox = document.getElementById('vRenderStatusBox');
+  const statusText = document.getElementById('vStatusText');
+  const statusPercent = document.getElementById('vStatusPercent');
+  const progressFill = document.getElementById('vProgressFill');
+  const monitorCanvas = document.getElementById('vMonitorCanvas');
+  const monitorCtx = monitorCanvas.getContext('2d');
+  
+  startBtn.disabled = true;
+  statusBox.style.display = 'flex';
+  progressFill.style.width = '0%';
+  statusPercent.textContent = '0%';
+  
+  const format = document.getElementById('vFormatSelect').value;
+  const transition = document.getElementById('vTransitionSelect').value;
+  const fps = parseInt(document.getElementById('vFpsSelect').value) || 30;
+  
+  try {
+    // Phase 1: Pre-render all slides to clean 1920x1080 canvas snapshots
+    statusText.textContent = 'Phase 1: Pre-rendering 1080p frames...';
+    
+    switchTab('preview');
+    const el = document.getElementById('frameCanvas');
+    const oldTransform = el.style.transform;
+    const oldTransition = el.style.transition;
+    const themeBg = getThemeCanvasBg();
+    
+    el.style.transition = 'none';
+    el.style.transform = 'none';
+    void el.offsetWidth;
+    
+    const slideBitmaps = [];
+    const savedIdx = currentIdx;
+    
+    for (let i = 0; i < playlist.length; i++) {
+      if (!isVideoExporting) throw new Error('Cancelled by user');
+      statusText.textContent = `Pre-rendering slide ${i + 1} of ${playlist.length}...`;
+      const snapProgress = Math.round(((i + 1) / playlist.length) * 35);
+      progressFill.style.width = `${snapProgress}%`;
+      statusPercent.textContent = `${snapProgress}%`;
+      
+      renderFrameByIndex(i);
+      if (document.fonts) await document.fonts.ready;
+      await new Promise(r => setTimeout(r, 60));
+      
+      const snap = await html2canvas(el, {
+        scale: 1,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: themeBg,
+        width: 1920,
+        height: 1080,
+        windowWidth: 1920,
+        windowHeight: 1080,
+        scrollX: 0,
+        scrollY: 0,
+        x: 0,
+        y: 0,
+        logging: false,
+        onclone: (clonedDoc) => normalizeCloneForRender(clonedDoc, themeBg)
+      });
+      
+      slideBitmaps.push(snap);
+      monitorCtx.drawImage(snap, 0, 0, monitorCanvas.width, monitorCanvas.height);
+    }
+    
+    // Restore UI state
+    el.style.transition = oldTransition;
+    el.style.transform = oldTransform;
+    selectMathematician(savedIdx);
+    
+    // Phase 2: Setup Recording Canvas & MediaRecorder
+    statusText.textContent = 'Phase 2: Encoding video stream...';
+    const recCanvas = document.createElement('canvas');
+    recCanvas.width = 1920;
+    recCanvas.height = 1080;
+    const recCtx = recCanvas.getContext('2d');
+    
+    const stream = recCanvas.captureStream(fps);
+    
+    let mimeType = 'video/webm;codecs=vp9';
+    let fileExt = 'webm';
+    
+    if (format === 'mp4') {
+      if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1.4d002a')) {
+        mimeType = 'video/mp4;codecs=avc1.4d002a';
+        fileExt = 'mp4';
+      } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+        mimeType = 'video/mp4';
+        fileExt = 'mp4';
+      } else {
+        mimeType = 'video/webm;codecs=vp9';
+        fileExt = 'webm';
+      }
+    } else {
+      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+        mimeType = 'video/webm;codecs=vp9';
+      } else if (MediaRecorder.isTypeSupported('video/webm')) {
+        mimeType = 'video/webm';
+      }
+      fileExt = 'webm';
+    }
+    
+    const recordedChunks = [];
+    const recorder = new MediaRecorder(stream, {
+      mimeType: mimeType,
+      videoBitsPerSecond: 25000000 // 25 Mbps high quality
+    });
+    
+    recorder.ondataavailable = e => {
+      if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+    };
+    
+    recorder.start(500);
+    
+    // Phase 3: Timeline playback loop with custom timings and smooth transitions
+    const fadeDuration = transition === 'fade' ? 0.6 : 0;
+    const totalTimelineSeconds = playlist.reduce((a, m) => a + (parseFloat(m.duration) || 5), 0);
+    let currentTime = 0;
+    const frameInterval = 1 / fps;
+    
+    while (currentTime < totalTimelineSeconds && isVideoExporting) {
+      let accum = 0;
+      let activeSlideIdx = 0;
+      let slideLocalTime = 0;
+      let slideDuration = 5;
+      
+      for (let s = 0; s < playlist.length; s++) {
+        const d = parseFloat(playlist[s].duration) || 5;
+        if (currentTime >= accum && currentTime < accum + d) {
+          activeSlideIdx = s;
+          slideLocalTime = currentTime - accum;
+          slideDuration = d;
+          break;
+        }
+        accum += d;
+      }
+      
+      const currentBitmap = slideBitmaps[activeSlideIdx];
+      const nextBitmap = slideBitmaps[activeSlideIdx + 1] || null;
+      const timeLeftInSlide = slideDuration - slideLocalTime;
+      
+      // Clear canvas with solid background
+      recCtx.fillStyle = themeBg;
+      recCtx.fillRect(0, 0, 1920, 1080);
+      
+      // Clean cross-dissolve alpha blending without underlying ghosting
+      if (transition === 'fade' && nextBitmap && timeLeftInSlide < fadeDuration) {
+        const t = Math.max(0, Math.min(1, 1 - (timeLeftInSlide / fadeDuration)));
+        // Outgoing slide fades out
+        recCtx.globalAlpha = 1 - t;
+        recCtx.drawImage(currentBitmap, 0, 0, 1920, 1080);
+        // Incoming slide fades in
+        recCtx.globalAlpha = t;
+        recCtx.drawImage(nextBitmap, 0, 0, 1920, 1080);
+      } else {
+        recCtx.globalAlpha = 1.0;
+        recCtx.drawImage(currentBitmap, 0, 0, 1920, 1080);
+      }
+      recCtx.globalAlpha = 1.0;
+      
+      // Update monitor
+      monitorCtx.clearRect(0, 0, monitorCanvas.width, monitorCanvas.height);
+      monitorCtx.drawImage(recCanvas, 0, 0, monitorCanvas.width, monitorCanvas.height);
+      
+      // Update progress
+      currentTime += frameInterval;
+      const overallProgress = 35 + ((currentTime / totalTimelineSeconds) * 65);
+      const pct = Math.min(100, Math.round(overallProgress));
+      progressFill.style.width = `${pct}%`;
+      statusPercent.textContent = `${pct}%`;
+      statusText.textContent = `Encoding: ${currentTime.toFixed(1)}s / ${totalTimelineSeconds.toFixed(1)}s (${playlist[activeSlideIdx].name})`;
+      
+      await new Promise(r => setTimeout(r, (1000 / fps) * 0.75));
+    }
+    
+    if (!isVideoExporting) throw new Error('Cancelled by user');
+    
+    // Stop recording and finalize file
+    statusText.textContent = 'Finalizing video file...';
+    await new Promise(resolve => {
+      recorder.onstop = resolve;
+      recorder.stop();
+    });
+    
+    // Auto-download video
+    const videoBlob = new Blob(recordedChunks, { type: mimeType });
+    const videoUrl = URL.createObjectURL(videoBlob);
+    const link = document.createElement('a');
+    link.download = `mathematicians_documentary_1080p.${fileExt}`;
+    link.href = videoUrl;
+    link.click();
+    
+    progressFill.style.width = '100%';
+    statusPercent.textContent = '100%';
+    statusText.textContent = '✓ Video exported & downloaded successfully!';
+    showToast('🎬 Video exported successfully!');
+    setTimeout(() => {
+      closeVideoModal();
+    }, 2000);
+    
+  } catch(err) {
+    console.error(err);
+    if (err.message !== 'Cancelled by user') {
+      showToast('Video export error: ' + err.message);
+      statusText.textContent = 'Error during export: ' + err.message;
+    } else {
+      showToast('Export cancelled');
+    }
+  } finally {
+    isVideoExporting = false;
+    startBtn.disabled = false;
+    startBtn.textContent = '▶ Start Video Export';
+  }
+}
+
+// =====================================================================
+//  AUTO SCALE FRAME TO FIT PREVIEW AREA
+// =====================================================================
+function scaleFrame() {
+  const scaler = document.getElementById('frameScaler');
+  const canvas = document.getElementById('frameCanvas');
+  if (!scaler || !canvas) return;
+  const sw = scaler.clientWidth  - 40;
+  const sh = scaler.clientHeight - 40;
+  const scale = Math.min(sw / 1920, sh / 1080);
+  canvas.style.transform = `scale(${scale})`;
+}
+
+// =====================================================================
+//  TOAST
+// =====================================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function flashAutosave() {
+  const tag = document.getElementById('autosaveTag');
+  if (!tag) return;
+  tag.classList.add('show');
+  clearTimeout(tag._t);
+  tag._t = setTimeout(() => tag.classList.remove('show'), 2000);
+}
+
+// ===== Live preview in edit form =====
+['eName','eMedal','eField'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', updateEditPreview);
+});
+
+// =====================================================================
+//  KEYBOARD SHORTCUTS
+// =====================================================================
+window.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextMathematician(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); prevMathematician(); }
+  else if (e.key === 'e' || e.key === 'E') switchTab('edit');
+  else if (e.key === 'p' || e.key === 'P') switchTab('preview');
+  else if (e.key === 's' || e.key === 'S') exportPng();
+});
+
+// =====================================================================
+//  INIT
+// =====================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  loadData();
+  renderList();
+  renderFrame(false);
+  populateEditForm();
+  scaleFrame();
+
+  window.addEventListener('resize', scaleFrame);
+
+  document.getElementById('prevBtn').addEventListener('click', prevMathematician);
+  document.getElementById('nextBtn').addEventListener('click', nextMathematician);
+  document.getElementById('addBtn').addEventListener('click', addMathematician);
+  setupDragAndDrop();
+});
+</script>
+</body>
+</html>

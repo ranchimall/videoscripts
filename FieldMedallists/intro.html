@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Architects of Reason — Dramatic Intro Video Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root {
+  --bg-core: #07090e;
+  --bg-canvas: #0c0e14;
+  --bg-surface: #131722;
+  --gold: #d4af37;
+  --gold-light: #fae4a8;
+  --gold-bright: #fff2c4;
+  --gold-deep: #996515;
+  --gold-line: rgba(212,175,55,.25);
+  --text-1: #ffffff;
+  --text-2: #f1f5f9;
+  --text-3: #cbd5e1;
+  --serif-display: 'Cinzel', serif;
+  --serif-body: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Plus Jakarta Sans', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-core);color:var(--text-1);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+
+.app-container{display:flex;flex-direction:column;width:100vw;height:100vh;overflow:hidden}
+
+.app-topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 24px;background:#0d1019;border-bottom:1px solid var(--gold-line);
+  z-index:50;flex-shrink:0;
+}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-icon{
+  width:32px;height:32px;border-radius:6px;background:linear-gradient(135deg,var(--gold),var(--gold-deep));
+  display:flex;align-items:center;justify-content:center;font-size:16px;color:#0c0e14;font-weight:900;
+  box-shadow:0 0 15px rgba(212,175,55,.4);
+}
+.brand-title{font-family:var(--serif-display);font-size:16px;font-weight:700;letter-spacing:2px;color:var(--gold-light);text-transform:uppercase}
+.brand-sub{font-size:11px;letter-spacing:1px;color:var(--text-3);text-transform:uppercase;margin-left:6px;opacity:.7}
+
+.top-actions{display:flex;align-items:center;gap:12px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:6px;font-family:var(--sans);
+  font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:all .2s ease;outline:none;border:none;
+}
+.btn-ghost{background:#161c2a;color:var(--text-2);border:1px solid rgba(255,255,255,.15)}
+.btn-ghost:hover{background:#1e2738;color:#fff;border-color:rgba(255,255,255,.3)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:#0c0e14;box-shadow:0 0 18px rgba(212,175,55,.35)}
+.btn-gold:hover{filter:brightness(1.15);transform:translateY(-1px);box-shadow:0 4px 22px rgba(212,175,55,.5)}
+.btn-gold:disabled,.btn-ghost:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+.studio-body{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;background:#05070b;
+}
+
+.viewport-scaler{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:100%;padding:20px;
+}
+
+#renderCanvas{
+  width:1920px;height:1080px;
+  background:#0c0e14;
+  transform-origin:center center;
+  box-shadow:0 0 80px rgba(0,0,0,.95);
+}
+
+.studio-controller{
+  background:#0d1019;border-top:1px solid var(--gold-line);padding:14px 28px;
+  display:flex;flex-direction:column;gap:12px;z-index:50;flex-shrink:0;
+}
+.ctrl-row-top{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.ctrl-left{display:flex;align-items:center;gap:14px}
+.play-btn{
+  width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-deep));
+  color:#0c0e14;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;
+  font-weight:900;box-shadow:0 0 15px rgba(212,175,55,.4);transition:all .2s;
+}
+.play-btn:hover{transform:scale(1.08);filter:brightness(1.15)}
+.time-display{font-family:var(--mono);font-size:14px;letter-spacing:1px;color:var(--gold-light);min-width:110px}
+.scene-indicator{font-family:var(--sans);font-size:13px;font-weight:700;color:var(--text-2);background:#161c2a;border:1px solid rgba(255,255,255,.1);padding:6px 14px;border-radius:6px}
+
+.ctrl-center{flex:1;display:flex;align-items:center;gap:12px;padding:0 20px}
+.timeline-track{
+  flex:1;height:8px;background:#1a2030;border-radius:4px;position:relative;cursor:pointer;overflow:hidden;
+  border:1px solid rgba(255,255,255,.08);
+}
+.timeline-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--gold-deep),var(--gold));border-radius:4px;transition:width .05s linear}
+
+.ctrl-right{display:flex;align-items:center;gap:10px}
+.preset-badge{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text-3);text-transform:uppercase}
+
+.timing-drawer{
+  display:flex;align-items:center;gap:10px;overflow-x:auto;padding-top:8px;border-top:1px solid rgba(255,255,255,.06);
+}
+.scene-dur-chip{
+  background:#131825;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:6px 10px;
+  display:flex;align-items:center;gap:6px;flex-shrink:0;
+}
+.scene-dur-label{font-size:11px;font-weight:700;color:var(--gold-light);white-space:nowrap}
+.scene-dur-input{
+  width:46px;background:#0c0f17;border:1px solid rgba(212,175,55,.4);color:#ffffff;
+  border-radius:4px;padding:3px 6px;font-family:var(--mono);font-size:12px;font-weight:700;text-align:center;
+}
+
+#toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+  background:rgba(19,23,34,.96);border:1px solid var(--gold);color:var(--gold-light);
+  padding:12px 24px;border-radius:8px;font-size:13.5px;font-weight:700;letter-spacing:.5px;
+  box-shadow:0 10px 30px rgba(0,0,0,.8), 0 0 20px rgba(212,175,55,.3);
+  z-index:9999;opacity:0;transition:opacity .3s ease;pointer-events:none;
+}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  
+  <header class="app-topbar">
+    <div class="brand">
+      <div class="brand-icon">✦</div>
+      <div>
+        <span class="brand-title">The Architects of Reason</span>
+        <span class="brand-sub">Intro Sequence Studio</span>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn btn-ghost" onclick="exportIntroZip()" id="zipBtn" title="Download all 7 high-res 1080p intro slides as PNG ZIP">
+        📦 Export PNG Slides (ZIP)
+      </button>
+      <button class="btn btn-gold" onclick="exportIntroVideo()" id="exportVideoBtn" title="Render 1080p MP4 Video with Exact Audio Duration">
+        🎬 Export 1080p Intro Video (MP4)
+      </button>
+    </div>
+  </header>
+
+  <main class="studio-body">
+    <div class="viewport-scaler" id="scalerWrap">
+      <canvas id="renderCanvas" width="1920" height="1080"></canvas>
+    </div>
+  </main>
+
+  <footer class="studio-controller">
+    <div class="ctrl-row-top">
+      <div class="ctrl-left">
+        <button class="play-btn" id="playBtn" onclick="togglePlay()" title="Play / Pause (Spacebar)">▶</button>
+        <div class="time-display" id="timeDisplay">00:00 / 11.5s</div>
+        <div class="scene-indicator" id="sceneIndicator">Scene 1 / 7</div>
+      </div>
+      
+      <div class="ctrl-center">
+        <div class="timeline-track" id="timelineTrack" onclick="seekTimeline(event)">
+          <div class="timeline-fill" id="timelineFill"></div>
+        </div>
+      </div>
+
+      <div class="ctrl-right">
+        <span class="preset-badge">PRESETS:</span>
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px" onclick="applyPreset([1.8, 1.4, 2.0, 1.8, 1.6, 1.8, 1.1])">⚡ 11.5s Punchy</button>
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:11.5px" onclick="applyPreset([2.2, 1.8, 2.8, 2.2, 2.2, 2.4, 1.4])">⏱️ 15.0s Narrative</button>
+      </div>
+    </div>
+
+    <div class="timing-drawer">
+      <span style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;margin-right:4px">Timing:</span>
+      <div class="scene-dur-chip"><span class="scene-dur-label">S1 (Intro):</span><input type="number" class="scene-dur-input" id="d0" value="1.8" step="0.1" min="0.5" onchange="updateDurations()">s</div>
+      <div class="scene-dur-chip"><span class="scene-dur-label">S2 (Shook):</span><input type="number" class="scene-dur-input" id="d1" value="1.4" step="0.1" min="0.5" onchange="updateDurations()">s</div>
+      <div class="scene-dur-chip"><span class="scene-dur-label">S3 (OpenAI):</span><input type="number" class="scene-dur-input" id="d2" value="2.0" step="0.1" min="0.5" onchange="updateDurations()">s</div>
+      <div class="scene-dur-chip"><span class="scene-dur-label">S4 (AI Math):</span><input type="number" class="scene-dur-input" id="d3" value="1.8" step="0.1" min="0.5" onchange="updateDurations()">s</div>
+      <div class="scene-dur-chip"><span class="scene-dur-label">S5 (Losing Sight):</span><input type="number" class="scene-dur-input" id="d4" value="1.6" step="0.1" min="0.5" onchange="updateDurations()">s</div>
+      <div class="scene-dur-chip"><span class="scene-dur-label">S6 (25 Medallists):</span><input type="number" class="scene-dur-input" id="d5" value="1.8" step="0.1" min="0.5" onchange="updateDurations()">s</div>
+      <div class="scene-dur-chip"><span class="scene-dur-label">S7 (Responded):</span><input type="number" class="scene-dur-input" id="d6" value="1.1" step="0.1" min="0.5" onchange="updateDurations()">s</div>
+      <span style="font-size:11px;color:var(--gold-light);font-family:var(--mono);margin-left:auto" id="totalDurationBadge">Total: 11.5s</span>
+    </div>
+  </footer>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+let sceneDurations = [1.8, 1.4, 2.0, 1.8, 1.6, 1.8, 1.1];
+let totalDuration = sceneDurations.reduce((a, b) => a + b, 0);
+let currentTime = 0;
+let isPlaying = false;
+let animationFrameId = null;
+let lastTimestamp = null;
+let isExporting = false;
+
+const canvas = document.getElementById('renderCanvas');
+const ctx = canvas.getContext('2d');
+
+const MATH_SYMBOLS = [
+  "e^(iπ) + 1 = 0", "ζ(s) = ∑ n^(-s)", "∫_M R dV",
+  "∇ × B = 0", "Spec(R)", "F{f}(ξ)",
+  "a_k^2 ≥ a_{k-1} a_{k+1}", "Q_p", "R_μν = λ g_μν",
+  "∮_C F · dr", "f̂(ξ) = ∫ f(x)e^(-2πixξ)dx", "lim_{n→∞}"
+];
+
+const nodes = [];
+for (let i = 0; i < 40; i++) {
+  nodes.push({
+    x: Math.random() * 1920,
+    y: Math.random() * 1080,
+    vx: (Math.random() - 0.5) * 0.55,
+    vy: (Math.random() - 0.5) * 0.55,
+    r: Math.random() * 2 + 1.2,
+    sym: MATH_SYMBOLS[Math.floor(Math.random() * MATH_SYMBOLS.length)],
+    alpha: Math.random() * 0.35 + 0.12
+  });
+}
+
+function updateNodes() {
+  for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i];
+    n.x += n.vx;
+    n.y += n.vy;
+    if (n.x < 0) n.x = 1920;
+    if (n.x > 1920) n.x = 0;
+    if (n.y < 0) n.y = 1080;
+    if (n.y > 1080) n.y = 0;
+  }
+}
+
+function drawBackground() {
+  ctx.fillStyle = '#0c0e14';
+  ctx.fillRect(0, 0, 1920, 1080);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(212,175,55,0.04)';
+  ctx.lineWidth = 1;
+  const gridSize = 120;
+  for (let x = 0; x < 1920; x += gridSize) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1080); ctx.stroke();
+  }
+  for (let y = 0; y < 1080; y += gridSize) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1920, y); ctx.stroke();
+  }
+
+  // Nodes & lines
+  for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i];
+    ctx.fillStyle = 'rgba(250,228,168,' + n.alpha + ')';
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.font = "italic 14px 'Cormorant Garamond', Georgia, serif";
+    ctx.fillStyle = 'rgba(212,175,55,' + (n.alpha * 0.85) + ')';
+    ctx.fillText(n.sym, n.x + 8, n.y + 5);
+
+    for (let j = i + 1; j < nodes.length; j++) {
+      const n2 = nodes[j];
+      const dist = Math.hypot(n.x - n2.x, n.y - n2.y);
+      if (dist < 190) {
+        ctx.strokeStyle = 'rgba(212,175,55,' + ((1 - dist / 190) * 0.09) + ')';
+        ctx.beginPath();
+        ctx.moveTo(n.x, n.y);
+        ctx.lineTo(n2.x, n2.y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Vignette
+  const vig = ctx.createRadialGradient(960, 540, 200, 960, 540, 980);
+  vig.addColorStop(0, 'rgba(12,14,20,0.0)');
+  vig.addColorStop(1, 'rgba(5,7,11,0.85)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, 1920, 1080);
+}
+
+function drawFrameDecorations(curTime) {
+  // Borders
+  ctx.strokeStyle = 'rgba(212,175,55,0.3)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(20, 20, 1880, 1040);
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.strokeRect(26, 26, 1868, 1028);
+
+  // Corner ornaments
+  ctx.strokeStyle = '#d4af37';
+  ctx.lineWidth = 2.5;
+  const s = 24;
+  // TL
+  ctx.beginPath(); ctx.moveTo(14, 14+s); ctx.lineTo(14, 14); ctx.lineTo(14+s, 14); ctx.stroke();
+  // TR
+  ctx.beginPath(); ctx.moveTo(1906-s, 14); ctx.lineTo(1906, 14); ctx.lineTo(1906, 14+s); ctx.stroke();
+  // BL
+  ctx.beginPath(); ctx.moveTo(14, 1066-s); ctx.lineTo(14, 1066); ctx.lineTo(14+s, 1066); ctx.stroke();
+  // BR
+  ctx.beginPath(); ctx.moveTo(1906-s, 1066); ctx.lineTo(1906, 1066); ctx.lineTo(1906, 1066-s); ctx.stroke();
+
+  // Top header line
+  ctx.strokeStyle = 'rgba(212,175,55,0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(55, 78); ctx.lineTo(1865, 78); ctx.stroke();
+
+  // Header Title
+  ctx.font = "700 16px 'Cinzel', serif";
+  ctx.fillStyle = '#d4af37';
+  ctx.textAlign = 'left';
+  ctx.fillText("◆  THE ARCHITECTS OF REASON  |  PROLOGUE", 55, 62);
+
+  // Header Badge
+  ctx.font = "700 12px 'Plus Jakarta Sans', sans-serif";
+  ctx.fillStyle = '#fae4a8';
+  ctx.textAlign = 'right';
+  ctx.fillText("SPECIAL DISPATCH", 1865, 62);
+
+  // Footer Line
+  ctx.beginPath(); ctx.moveTo(55, 1005); ctx.lineTo(1865, 1005); ctx.stroke();
+
+  // Footer Tag
+  ctx.font = "700 13px 'Cinzel', serif";
+  ctx.fillStyle = '#cbd5e1';
+  ctx.textAlign = 'left';
+  ctx.fillText("THE FIELDS MEDAL CONVERGENCE", 55, 1032);
+
+  // Footer Timecode
+  ctx.font = "600 13px 'JetBrains Mono', monospace";
+  ctx.fillStyle = '#fae4a8';
+  ctx.textAlign = 'right';
+  ctx.fillText(curTime.toFixed(1) + "s / " + totalDuration.toFixed(1) + "s", 1865, 1032);
+}
+
+function getSceneInfo(time) {
+  let accum = 0;
+  for (let i = 0; i < sceneDurations.length; i++) {
+    const d = sceneDurations[i];
+    if (time >= accum && time < accum + d) {
+      return { idx: i, local: time - accum, dur: d, progress: (time - accum) / d };
+    }
+    accum += d;
+  }
+  const lastIdx = sceneDurations.length - 1;
+  return { idx: lastIdx, local: sceneDurations[lastIdx], dur: sceneDurations[lastIdx], progress: 1.0 };
+}
+
+function renderSceneOnCanvas(time) {
+  drawBackground();
+  drawFrameDecorations(time);
+
+  const info = getSceneInfo(time);
+  const idx = info.idx;
+  const p = info.progress;
+
+  // Scene fade in / out alpha
+  let alpha = 1.0;
+  const fadeInT = 0.2;
+  const fadeOutT = 0.85;
+  if (p < fadeInT) alpha = p / fadeInT;
+  else if (p > fadeOutT && idx < 6) alpha = (1 - p) / (1 - fadeOutT);
+
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+  ctx.textAlign = 'center';
+
+  if (idx === 0) {
+    // SCENE 1: "Recently, something happened..."
+    ctx.font = "700 16px 'Plus Jakarta Sans', sans-serif";
+    ctx.fillStyle = '#fae4a8';
+    ctx.letterSpacing = '4px';
+    ctx.fillText("✦  THE PROLOGUE  ✦", 960, 480);
+
+    ctx.font = "italic 600 56px 'Cormorant Garamond', Georgia, serif";
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.85)';
+    ctx.shadowBlur = 20;
+    ctx.fillText('"Recently, something happened', 960, 560);
+    ctx.fillText('that shook the mathematical world."', 960, 630);
+  }
+  else if (idx === 1) {
+    // SCENE 2: "...that shook the mathematical world."
+    const scale = 1.0 + (p * 0.05);
+    ctx.translate(960, 540);
+    ctx.scale(scale, scale);
+    ctx.translate(-960, -540);
+
+    ctx.font = "900 64px 'Cinzel', serif";
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(212,175,55,0.8)';
+    ctx.shadowBlur = 35;
+    ctx.fillText("THAT SHOOK THE", 960, 510);
+    ctx.fillText("MATHEMATICAL WORLD.", 960, 590);
+
+    ctx.font = "italic 28px 'Cormorant Garamond', Georgia, serif";
+    ctx.fillStyle = '#d4af37';
+    ctx.shadowBlur = 10;
+    ctx.fillText("— A fracture across 90 years of established theory —", 960, 660);
+  }
+  else if (idx === 2) {
+    // SCENE 3: OpenAI Dispatch Card
+    ctx.fillStyle = 'rgba(20, 26, 40, 0.95)';
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = 'rgba(0,0,0,0.85)';
+    ctx.shadowBlur = 40;
+    
+    // Rounded Card
+    ctx.beginPath();
+    ctx.roundRect(310, 310, 1300, 460, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    // Top gold line
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(560, 310); ctx.lineTo(1360, 310);
+    ctx.stroke();
+
+    // Badge
+    ctx.font = "700 14px 'JetBrains Mono', monospace";
+    ctx.fillStyle = '#fae4a8';
+    ctx.shadowBlur = 0;
+    ctx.fillText("⚡ COMPUTATIONAL INTELLIGENCE REPORT", 960, 390);
+
+    // Text
+    ctx.font = "italic 400 42px 'Cormorant Garamond', Georgia, serif";
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 15;
+    ctx.fillText('"An AI company called OpenAI claimed to solve a mystery', 960, 480);
+    ctx.fillText('that mathematicians around the world had been unable', 960, 545);
+    ctx.fillText('to solve for 90 years."', 960, 610);
+
+    // Author
+    ctx.font = "700 14px 'Plus Jakarta Sans', sans-serif";
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillText("— INTERNATIONAL MATHEMATICAL COMMUNITY • 2026", 960, 700);
+  }
+  else if (idx === 3) {
+    // SCENE 4: AI IS CHANGING MATHEMATICS
+    const punch = Math.min(1.0, p * 4);
+    const scale = 1.08 - (punch * 0.08);
+    ctx.translate(960, 540);
+    ctx.scale(scale, scale);
+    ctx.translate(-960, -540);
+
+    ctx.font = "700 15px 'JetBrains Mono', monospace";
+    ctx.fillStyle = '#fae4a8';
+    ctx.shadowBlur = 0;
+    ctx.fillText("[ PARADIGM SHIFT ]", 960, 430);
+
+    ctx.font = "900 76px 'Cinzel', serif";
+    ctx.fillStyle = '#fff2c4';
+    ctx.shadowColor = 'rgba(212,175,55,0.9)';
+    ctx.shadowBlur = 45;
+    ctx.fillText("AI IS CHANGING", 960, 525);
+    ctx.fillText("MATHEMATICS", 960, 615);
+
+    // Glow line
+    ctx.strokeStyle = '#d4af37';
+    ctx.lineWidth = 3;
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.moveTo(800, 670); ctx.lineTo(1120, 670);
+    ctx.stroke();
+  }
+  else if (idx === 4) {
+    // SCENE 5: "But are we losing sight..."
+    ctx.font = "110px 'Cormorant Garamond', Georgia, serif";
+    ctx.fillStyle = 'rgba(212,175,55,0.5)';
+    ctx.fillText("“", 960, 430);
+
+    ctx.font = "italic 400 52px 'Cormorant Garamond', Georgia, serif";
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 20;
+    ctx.fillText('"But are we losing sight of what', 960, 520);
+    ctx.fillText('mathematics is meant to achieve?"', 960, 595);
+
+    ctx.font = "700 15px 'Plus Jakarta Sans', sans-serif";
+    ctx.fillStyle = '#fae4a8';
+    ctx.shadowBlur = 0;
+    ctx.fillText("✦  THE HUMAN ESSENCE OF DISCOVERY  ✦", 960, 680);
+  }
+  else if (idx === 5) {
+    // SCENE 6: 25 FIELDS MEDALLISTS
+    ctx.font = "900 150px 'Cinzel', serif";
+    ctx.fillStyle = '#fff2c4';
+    ctx.shadowColor = 'rgba(212,175,55,0.9)';
+    ctx.shadowBlur = 50;
+    ctx.fillText("25", 960, 470);
+
+    ctx.font = "800 54px 'Cinzel', serif";
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur = 25;
+    ctx.fillText("FIELDS MEDALLISTS", 960, 560);
+
+    ctx.font = "italic 30px 'Cormorant Garamond', Georgia, serif";
+    ctx.fillStyle = '#fae4a8';
+    ctx.shadowBlur = 10;
+    ctx.fillText('"Considered among the most exceptional mathematicians of their generations"', 960, 630);
+
+    ctx.font = "700 16px 'JetBrains Mono', monospace";
+    ctx.fillStyle = '#cbd5e1';
+    ctx.shadowBlur = 0;
+    ctx.fillText("CLASSICAL FOUNDATIONS • 1978 — 2026", 960, 685);
+  }
+  else if (idx === 6) {
+    // SCENE 7: RESPONDED TO THIS
+    ctx.font = "700 14px 'JetBrains Mono', monospace";
+    ctx.fillStyle = '#fae4a8';
+    ctx.fillText("[ GLOBAL STATEMENT ]", 960, 440);
+
+    ctx.font = "900 80px 'Cinzel', serif";
+    ctx.fillStyle = '#fff2c4';
+    ctx.shadowColor = 'rgba(212,175,55,0.95)';
+    ctx.shadowBlur = 45;
+    ctx.fillText("RESPONDED TO THIS", 960, 545);
+
+    ctx.font = "700 32px 'Cinzel', serif";
+    ctx.fillStyle = '#fae4a8';
+    ctx.shadowBlur = 15;
+    ctx.fillText("SEPTEMBER 11, 2026", 960, 630);
+
+    ctx.font = "700 32px 'Cinzel', serif";
+    ctx.fillStyle = '#d4af37';
+    ctx.fillText("▼", 960, 690);
+  }
+
+  ctx.restore();
+}
+
+function updateFrame(time) {
+  currentTime = Math.max(0, Math.min(totalDuration, time));
+  const info = getSceneInfo(currentTime);
+
+  const pct = (currentTime / totalDuration) * 100;
+  document.getElementById('timelineFill').style.width = pct + '%';
+  
+  const curStr = currentTime.toFixed(1);
+  const totStr = totalDuration.toFixed(1);
+  document.getElementById('timeDisplay').textContent = curStr + 's / ' + totStr + 's';
+  document.getElementById('sceneIndicator').textContent = 'Scene ' + (info.idx + 1) + ' / 7';
+
+  updateNodes();
+  renderSceneOnCanvas(currentTime);
+}
+
+function playLoop(timestamp) {
+  if (!isPlaying) return;
+  if (!lastTimestamp) lastTimestamp = timestamp;
+  const delta = (timestamp - lastTimestamp) / 1000;
+  lastTimestamp = timestamp;
+
+  currentTime += delta;
+  if (currentTime >= totalDuration) {
+    currentTime = totalDuration;
+    updateFrame(currentTime);
+    pause();
+    return;
+  }
+
+  updateFrame(currentTime);
+  animationFrameId = requestAnimationFrame(playLoop);
+}
+
+function play() {
+  if (currentTime >= totalDuration) currentTime = 0;
+  isPlaying = true;
+  lastTimestamp = null;
+  document.getElementById('playBtn').textContent = '⏸';
+  animationFrameId = requestAnimationFrame(playLoop);
+}
+
+function pause() {
+  isPlaying = false;
+  document.getElementById('playBtn').textContent = '▶';
+  if (animationFrameId) cancelAnimationFrame(animationFrameId);
+}
+
+function togglePlay() {
+  if (isPlaying) pause();
+  else play();
+}
+
+function seekTimeline(e) {
+  const rect = document.getElementById('timelineTrack').getBoundingClientRect();
+  const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  currentTime = ratio * totalDuration;
+  updateFrame(currentTime);
+}
+
+function updateDurations() {
+  for (let i = 0; i < 7; i++) {
+    const val = parseFloat(document.getElementById('d' + i).value);
+    sceneDurations[i] = !isNaN(val) && val >= 0.3 ? val : 1.5;
+  }
+  totalDuration = sceneDurations.reduce((a, b) => a + b, 0);
+  document.getElementById('totalDurationBadge').textContent = 'Total: ' + totalDuration.toFixed(1) + 's';
+  updateFrame(currentTime);
+  showToast('✓ Durations updated — Total: ' + totalDuration.toFixed(1) + 's');
+}
+
+function applyPreset(durs) {
+  sceneDurations = [...durs];
+  for (let i = 0; i < 7; i++) {
+    document.getElementById('d' + i).value = durs[i];
+  }
+  totalDuration = sceneDurations.reduce((a, b) => a + b, 0);
+  document.getElementById('totalDurationBadge').textContent = 'Total: ' + totalDuration.toFixed(1) + 's';
+  currentTime = 0;
+  updateFrame(0);
+  showToast('✓ Applied preset (' + totalDuration.toFixed(1) + 's)');
+}
+
+function scaleStage() {
+  const wrap = document.getElementById('scalerWrap');
+  if (!wrap || !canvas) return;
+  const availW = wrap.clientWidth - 40;
+  const availH = wrap.clientHeight - 40;
+  const scale = Math.min(availW / 1920, availH / 1080, 1.0);
+  canvas.style.transform = 'scale(' + scale + ')';
+}
+
+async function exportIntroZip() {
+  if (isExporting) return;
+  isExporting = true;
+  pause();
+
+  const zipBtn = document.getElementById('zipBtn');
+  zipBtn.disabled = true;
+  zipBtn.textContent = '⏳ Rendering Slides...';
+
+  try {
+    const zip = new JSZip();
+    showToast('📦 Rendering 7 high-res 1080p intro slides...');
+
+    let accum = 0;
+    for (let i = 0; i < 7; i++) {
+      const midTime = accum + (sceneDurations[i] / 2);
+      updateFrame(midTime);
+
+      const idxStr = String(i + 1).padStart(2, '0');
+      const dataUrl = canvas.toDataURL('image/png');
+      zip.file('intro_scene_' + idxStr + '_1080p.png', dataUrl.replace(/^data:image\/png;base64,/, ''), { base64: true });
+      accum += sceneDurations[i];
+    }
+
+    showToast('📦 Compressing ZIP package...');
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const link = document.createElement('a');
+    link.download = 'the_architects_of_reason_intro_slides.zip';
+    link.href = URL.createObjectURL(zipBlob);
+    link.click();
+    showToast('✓ Intro slides exported successfully!');
+  } catch(e) {
+    console.error(e);
+    showToast('Export error: ' + e.message);
+  } finally {
+    zipBtn.disabled = false;
+    zipBtn.textContent = '📦 Export PNG Slides (ZIP)';
+    isExporting = false;
+  }
+}
+
+async function exportIntroVideo() {
+  if (isExporting) return;
+  isExporting = true;
+  pause();
+
+  const expBtn = document.getElementById('exportVideoBtn');
+  expBtn.disabled = true;
+
+  try {
+    const fps = 30;
+    const frameInterval = 1 / fps;
+
+    const stream = canvas.captureStream(fps);
+
+    let mimeType = 'video/webm;codecs=vp9';
+    let fileExt = 'webm';
+    if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1.4d002a')) {
+      mimeType = 'video/mp4;codecs=avc1.4d002a'; fileExt = 'mp4';
+    } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+      mimeType = 'video/mp4'; fileExt = 'mp4';
+    }
+
+    const recordedChunks = [];
+    const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 28000000 });
+    recorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    recorder.start(500);
+
+    const exportStartTime = performance.now();
+    let streamTime = 0;
+
+    // Direct 60/30fps real-time frame-by-frame rendering with live animated background!
+    while (streamTime < totalDuration && isExporting) {
+      updateFrame(streamTime);
+      streamTime += frameInterval;
+      expBtn.textContent = '⏳ Encoding: ' + streamTime.toFixed(1) + 's / ' + totalDuration.toFixed(1) + 's';
+
+      const expectedElapsedMs = streamTime * 1000;
+      const actualElapsedMs = performance.now() - exportStartTime;
+      const waitMs = Math.max(2, expectedElapsedMs - actualElapsedMs);
+      await new Promise(r => setTimeout(r, waitMs));
+    }
+
+    expBtn.textContent = '⏳ Finalizing Video...';
+    await new Promise(resolve => {
+      recorder.onstop = resolve;
+      recorder.stop();
+    });
+
+    const videoBlob = new Blob(recordedChunks, { type: mimeType });
+    const link = document.createElement('a');
+    link.download = 'the_architects_of_reason_intro_1080p.' + fileExt;
+    link.href = URL.createObjectURL(videoBlob);
+    link.click();
+    showToast('✓ 1080p Intro Video exported successfully!');
+  } catch(e) {
+    console.error(e);
+    showToast('Video export error: ' + e.message);
+  } finally {
+    expBtn.disabled = false;
+    expBtn.textContent = '🎬 Export 1080p Intro Video (MP4)';
+    isExporting = false;
+    updateFrame(currentTime);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+window.addEventListener('resize', scaleStage);
+window.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if (e.key === ' ' || e.key === 'k') { e.preventDefault(); togglePlay(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); updateFrame(currentTime - 1); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); updateFrame(currentTime + 1); }
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+  scaleStage();
+  if (document.fonts) await document.fonts.ready;
+  updateFrame(0);
+});
+</script>
+</body>
+</html>
